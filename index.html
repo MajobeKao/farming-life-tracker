@@ -640,8 +640,7 @@
 
 <script>
   console.log('Script starting...');
-  try {
-  let data = { farm: [], daily: [], habits: [], money: [], goals: [], reminders: [], notes: [], photos: [], profileName: 'Farmer Joe', moods: [], meals: [], journals: [], habitStreaks: {}, water: [], savingsGoals: [], recurringExpenses: [], expenses: [], currency: '$', voiceNotes: [], documents: [], notifSettings: { daily: true, goals: true, habits: true, browser: false } };
+  var data = { farm: [], daily: [], habits: [], money: [], goals: [], reminders: [], notes: [], photos: [], profileName: 'Farmer Joe', moods: [], meals: [], journals: [], habitStreaks: {}, water: [], savingsGoals: [], recurringExpenses: [], expenses: [], currency: '$', voiceNotes: [], documents: [], notifSettings: { daily: true, goals: true, habits: true, browser: false } };
 
   function getCurrency() { return data.currency || '$'; }
   function formatMoney(amount) { return getCurrency() + amount.toFixed(0); }
@@ -1429,7 +1428,6 @@
       document.getElementById('page-' + page).classList.add('active');
     }
   });
-  } catch(e) { console.error('Script error:', e); alert('Error: ' + e.message); }
 })();
 
 if ('serviceWorker' in navigator) {
