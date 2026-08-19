@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>🌾 Life & Farm Tracker</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, system-ui, sans-serif; }
     body { background: #f4f7fb; color: #1e2a3a; padding: 1rem; max-width: 1400px; margin: 0 auto; }
@@ -106,7 +109,27 @@
     .progress-bar { background: #e8f5e9; border-radius: 10px; height: 12px; width: 100%; overflow: hidden; margin: 0.5rem 0; }
     .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #27ae60, #2ecc71); transition: width 0.3s; }
     .goal-actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
-    @media (max-width: 700px) { .row-2col { grid-template-columns: 1fr; } .app-header { flex-direction: column; align-items: stretch; gap: 1rem; } .nav-tabs { justify-content: center; } }
+    .report-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; }
+    .report-card { background: white; border-radius: 20px; padding: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .report-card h3 { margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+    .chart-container { position: relative; height: 200px; }
+    .analytics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+    .analytics-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1.2rem; border-radius: 16px; text-align: center; }
+    .analytics-card.green { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+    .analytics-card.orange { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .analytics-card.blue { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+    .analytics-card .label { font-size: 0.75rem; opacity: 0.9; }
+    .analytics-card .value { font-size: 1.8rem; font-weight: 700; }
+    .export-btns { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .export-btns button { padding: 0.5rem 1rem; font-size: 0.85rem; }
+    .compare-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    .compare-table th, .compare-table td { padding: 0.8rem; text-align: left; border-bottom: 1px solid #e4ecf5; }
+    .compare-table th { background: #f8fafc; font-weight: 600; }
+    .compare-table .positive { color: #27ae60; }
+    .compare-table .negative { color: #e74c3c; }
+    .dashboard-viz { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .mini-chart { height: 120px; }
+    @media (max-width: 700px) { .row-2col { grid-template-columns: 1fr; } .app-header { flex-direction: column; align-items: stretch; gap: 1rem; } .nav-tabs { justify-content: center; } .analytics-grid { grid-template-columns: repeat(2, 1fr); } .dashboard-viz { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
@@ -433,11 +456,44 @@
 </div>
 
 <div id="page-reports" class="page">
-  <div class="card-panel"><h2><i class="fas fa-chart-bar"></i> Reports</h2>
-    <div class="flex-row">
-      <button class="primary" id="reportDailyBtn">📅 Daily</button>
-      <button class="primary" id="reportWeeklyBtn">📆 Weekly</button>
-      <button class="primary" id="reportMonthlyBtn">📊 Monthly</button>
+  <div class="analytics-grid">
+    <div class="analytics-card"><div class="label">Total Harvest</div><div class="value" id="anaHarvest">0 kg</div></div>
+    <div class="analytics-card green"><div class="label">Farm Profit</div><div class="value" id="anaProfit">$0</div></div>
+    <div class="analytics-card orange"><div class="label">Goals Done</div><div class="value" id="anaGoals">0</div></div>
+    <div class="analytics-card blue"><div class="label">Balance</div><div class="value" id="anaBalance">$0</div></div>
+  </div>
+  <div class="report-grid">
+    <div class="report-card">
+      <h3><i class="fas fa-chart-line"></i> Farm Revenue Trend</h3>
+      <div class="chart-container"><canvas id="farmTrendChart"></canvas></div>
+    </div>
+    <div class="report-card">
+      <h3><i class="fas fa-chart-pie"></i> Expense Breakdown</h3>
+      <div class="chart-container"><canvas id="expenseChart"></canvas></div>
+    </div>
+  </div>
+  <div class="report-grid">
+    <div class="report-card">
+      <h3><i class="fas fa-chart-bar"></i> Daily Moods</h3>
+      <div class="chart-container"><canvas id="moodChart"></canvas></div>
+    </div>
+    <div class="report-card">
+      <h3><i class="fas fa-tint"></i> Water Intake Trend</h3>
+      <div class="chart-container"><canvas id="waterChart"></canvas></div>
+    </div>
+  </div>
+  <div class="card-panel">
+    <h2><i class="fas fa-balance-scale"></i> Weekly vs Monthly Comparison</h2>
+    <div id="comparisonTable"></div>
+  </div>
+  <div class="card-panel">
+    <h2><i class="fas fa-file-export"></i> Export & Share</h2>
+    <div class="export-btns">
+      <button class="primary" id="exportPdfBtn"><i class="fas fa-file-pdf"></i> Export PDF</button>
+      <button class="primary" id="emailReportBtn"><i class="fas fa-envelope"></i> Email Report</button>
+      <button class="primary" id="reportDailyBtn"><i class="fas fa-calendar-day"></i> Daily Summary</button>
+      <button class="primary" id="reportWeeklyBtn"><i class="fas fa-calendar-week"></i> Weekly Summary</button>
+      <button class="primary" id="reportMonthlyBtn"><i class="fas fa-calendar-alt"></i> Monthly Summary</button>
     </div>
     <div id="reportContent" style="margin-top: 1.2rem; background: #f2f8fe; padding: 1rem; border-radius: 24px;"></div>
   </div>
@@ -931,6 +987,100 @@
       data.reminders.push({ text: 'Check savings', date: 'tomorrow' });
       saveData();
     }
+
+    renderCharts();
+  });
+
+  function renderCharts() {
+    document.getElementById('anaHarvest').innerText = data.farm.reduce((s, f) => s + (f.harvest || 0), 0) + ' kg';
+    document.getElementById('anaProfit').innerText = getCurrency() + data.farm.reduce((s, f) => s + calculateProfit(f), 0).toFixed(0);
+    document.getElementById('anaGoals').innerText = data.goals.filter(g => g.done).length + '/' + data.goals.length;
+    document.getElementById('anaBalance').innerText = getCurrency() + getBalance();
+
+    const farmTrendCtx = document.getElementById('farmTrendChart');
+    if (farmTrendCtx) {
+      const farmByDate = {};
+      data.farm.forEach(f => {
+        const date = f.date?.split('T')[0] || 'unknown';
+        farmByDate[date] = (farmByDate[date] || 0) + calculateProfit(f);
+      });
+      new Chart(farmTrendCtx.getContext('2d'), {
+        type: 'line',
+        data: { labels: Object.keys(farmByDate).slice(-7), datasets: [{ label: 'Profit', data: Object.values(farmByDate).slice(-7), borderColor: '#2b7a4b', backgroundColor: 'rgba(43,122,75,0.1)', fill: true }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+      });
+    }
+
+    const expenseCtx = document.getElementById('expenseChart');
+    if (expenseCtx) {
+      const catTotals = {};
+      data.expenses.forEach(e => { catTotals[e.category] = (catTotals[e.category] || 0) + e.amount; });
+      new Chart(expenseCtx.getContext('2d'), {
+        type: 'doughnut',
+        data: { labels: Object.keys(catTotals), datasets: [{ data: Object.values(catTotals), backgroundColor: ['#e74c3c', '#3498db', '#f39c12', '#9b59b6', '#27ae60', '#95a5a6'] }] },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
+
+    const moodCtx = document.getElementById('moodChart');
+    if (moodCtx) {
+      const moodCounts = { '😊': 0, '🙂': 0, '😐': 0, '😔': 0, '😢': 0 };
+      data.moods.forEach(m => { if (moodCounts.hasOwnProperty(m.mood)) moodCounts[m.mood]++; });
+      new Chart(moodCtx.getContext('2d'), {
+        type: 'bar',
+        data: { labels: Object.keys(moodCounts), datasets: [{ label: 'Mood Count', data: Object.values(moodCounts), backgroundColor: ['#27ae60', '#2ecc71', '#f1c40f', '#e67e22', '#e74c3c'] }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+      });
+    }
+
+    const waterCtx = document.getElementById('waterChart');
+    if (waterCtx) {
+      const waterByDate = {};
+      data.water.forEach(w => { waterByDate[w.date] = w.count; });
+      new Chart(waterCtx.getContext('2d'), {
+        type: 'line',
+        data: { labels: Object.keys(waterByDate).slice(-7), datasets: [{ label: 'Glasses', data: Object.values(waterByDate).slice(-7), borderColor: '#3498db', backgroundColor: 'rgba(52,152,219,0.1)', fill: true }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+      });
+    }
+
+    const compTable = document.getElementById('comparisonTable');
+    if (compTable) {
+      const weeklyHarvest = data.farm.filter(f => { const d = new Date(f.date); const now = new Date(); return (now - d) / (1000*60*60*24) <= 7; }).reduce((s, f) => s + (f.harvest || 0), 0);
+      const monthlyHarvest = data.farm.reduce((s, f) => s + (f.harvest || 0), 0);
+      const weeklyExp = data.money.filter(m => m.type === 'expense' && new Date(m.id) > new Date(Date.now() - 7*24*60*60*1000)).reduce((s, m) => s + m.amount, 0);
+      const monthlyExp = data.money.filter(m => m.type === 'expense').reduce((s, m) => s + m.amount, 0);
+      const weeklyGoals = data.goals.filter(g => g.done && new Date(g.date) > new Date(Date.now() - 7*24*60*60*1000)).length;
+      const monthlyGoals = data.goals.filter(g => g.done).length;
+
+      compTable.innerHTML = `<table class="compare-table"><thead><tr><th>Metric</th><th>Weekly</th><th>Monthly</th><th>Change</th></tr></thead><tbody>
+        <tr><td>Harvest (kg)</td><td>${weeklyHarvest}</td><td>${monthlyHarvest}</td><td class="${monthlyHarvest >= weeklyHarvest * 4 ? 'positive' : 'negative'}">${weeklyHarvest > 0 ? ((monthlyHarvest / weeklyHarvest) - 1 * 100).toFixed(0) : 0}%</td></tr>
+        <tr><td>Expenses</td><td>${getCurrency()}${weeklyExp}</td><td>${getCurrency()}${monthlyExp}</td><td class="${monthlyExp <= weeklyExp * 4 ? 'positive' : 'negative'}">${weeklyExp > 0 ? ((monthlyExp / weeklyExp) - 1 * 100).toFixed(0) : 0}%</td></tr>
+        <tr><td>Goals Completed</td><td>${weeklyGoals}</td><td>${monthlyGoals}</td><td class="${monthlyGoals >= weeklyGoals ? 'positive' : 'negative'}">${weeklyGoals > 0 ? ((monthlyGoals / weeklyGoals) - 1 * 100).toFixed(0) : 0}%</td></tr>
+      </tbody></table>`;
+    }
+  }
+
+  window.renderCharts = renderCharts;
+
+  document.getElementById('exportPdfBtn')?.addEventListener('click', async function() {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF();
+    pdf.setFontSize(20);
+    pdf.text('Farming & Life Tracker Report', 20, 20);
+    pdf.setFontSize(12);
+    pdf.text(`Generated: ${new Date().toLocaleDateString()}`, 20, 30);
+    pdf.text(`Balance: ${getCurrency()}${getBalance()}`, 20, 45);
+    pdf.text(`Total Harvest: ${data.farm.reduce((s, f) => s + (f.harvest || 0), 0)} kg`, 20, 55);
+    pdf.text(`Goals Completed: ${data.goals.filter(g => g.done).length}/${data.goals.length}`, 20, 65);
+    pdf.text('Farm Profit: ' + getCurrency() + data.farm.reduce((s, f) => s + calculateProfit(f), 0).toFixed(0), 20, 75);
+    pdf.save('farm-tracker-report.pdf');
+  });
+
+  document.getElementById('emailReportBtn')?.addEventListener('click', function() {
+    const subject = encodeURIComponent('Farming & Life Tracker Report');
+    const body = encodeURIComponent(`Report ${new Date().toLocaleDateString()}\n\nBalance: ${getCurrency()}${getBalance()}\nTotal Harvest: ${data.farm.reduce((s, f) => s + (f.harvest || 0), 0)} kg\nGoals: ${data.goals.filter(g => g.done).length}/${data.goals.length}\nFarm Profit: ${getCurrency()}${data.farm.reduce((s, f) => s + calculateProfit(f), 0).toFixed(0)}`);
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
   });
 })();
 </script>
