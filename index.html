@@ -1,1438 +1,3057 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🌾 Life & Farm Tracker</title>
-  <meta name="theme-color" content="#1f6e3f">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <style>
-    :root {
-      --bg-main: #f4f7fb;
-      --bg-card: white;
-      --text-main: #1e2a3a;
-      --text-muted: #5a6e7e;
-      --border-color: #eef3f8;
-      --accent: #1f6e3f;
-      --accent-light: #e9f3ed;
-    }
-    [data-theme="dark"] {
-      --bg-main: #1a1a2e;
-      --bg-card: #16213e;
-      --text-main: #e4e6eb;
-      --text-muted: #b0b3b8;
-      --border-color: #2d3a5a;
-      --accent: #2ecc71;
-      --accent-light: #1e3a2f;
-    }
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, system-ui, sans-serif; }
-    body { background: var(--bg-main); color: var(--text-main); padding: 1rem; max-width: 1400px; margin: 0 auto; transition: background 0.3s, color 0.3s; }
-    .app-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 1.5rem; background: var(--bg-card); padding: 1rem 1.5rem; border-radius: 30px; box-shadow: 0 8px 20px rgba(0,0,0,0.03); }
-    .app-header h1 { font-weight: 600; font-size: 1.8rem; letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px; }
-    .app-header h1 i { color: var(--accent); }
-    .nav-tabs { display: flex; flex-wrap: wrap; gap: 0.3rem; background: var(--border-color); padding: 0.3rem; border-radius: 40px; }
-    .nav-tabs button { background: transparent; border: none; padding: 0.5rem 1.1rem; border-radius: 30px; font-weight: 500; color: var(--text-main); transition: 0.2s; cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; gap: 6px; }
-    .nav-tabs button i { font-size: 1rem; }
-    .nav-tabs button.active { background: var(--bg-card); box-shadow: 0 4px 10px rgba(0,0,0,0.04); color: var(--accent); }
-    .nav-tabs button:hover { background: white; }
-    .page { display: none; margin-top: 1.2rem; }
-    .page.active { display: block; }
-    .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1.2rem; margin-bottom: 2rem; }
-    .stat-card { background: white; padding: 1.2rem 1rem; border-radius: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); border: 1px solid #eef3f8; transition: 0.2s; display: flex; align-items: center; gap: 12px; }
-    .stat-card i { font-size: 2rem; width: 3rem; height: 3rem; display: flex; align-items: center; justify-content: center; background: #e9f3ed; border-radius: 18px; color: #1f6e3f; }
-    .stat-card div { flex: 1; }
-    .stat-card h4 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: #5a6e7e; }
-    .stat-card .value { font-size: 1.5rem; font-weight: 600; }
-    .card-panel { background: white; border-radius: 28px; padding: 1.5rem 1.8rem; margin-bottom: 1.5rem; box-shadow: 0 4px 16px rgba(0,0,0,0.02); border: 1px solid #eef3f8; }
-    .card-panel h2 { font-weight: 500; font-size: 1.3rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 10px; color: #1e2a3a; }
-    .flex-row { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; }
-    input, textarea, select { background: #f9fcff; border: 1px solid #dbe2ea; padding: 0.6rem 1rem; border-radius: 30px; font-size: 0.9rem; outline: none; transition: 0.2s; }
-    input:focus, textarea:focus, select:focus { border-color: #2b7a4b; box-shadow: 0 0 0 3px rgba(43, 122, 75, 0.1); }
-    button.primary { background: #1f6e3f; border: none; color: white; padding: 0.6rem 1.4rem; border-radius: 40px; font-weight: 500; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px; }
-    button.primary:hover { background: #155a32; transform: scale(0.97); }
-    button.outline { background: transparent; border: 1px solid #cbd8e6; padding: 0.5rem 1.2rem; border-radius: 40px; cursor: pointer; }
-    .list-item { background: #f9fcff; border-radius: 20px; padding: 0.8rem 1.2rem; margin-bottom: 0.6rem; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; border-left: 5px solid #2b7a4b; }
-    .badge { background: #d9e6e0; padding: 0.2rem 1rem; border-radius: 40px; font-size: 0.75rem; }
-    .small-note { color: #4a5f72; font-size: 0.85rem; }
-    .photo-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
-    .photo-grid img { width: 70px; height: 70px; object-fit: cover; border-radius: 16px; border: 2px solid #e0e9f2; }
-    hr { border: none; border-top: 1px solid #e4ecf5; margin: 1.2rem 0; }
-    .row-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-    .profit { color: #2b7a4b; font-weight: 600; }
-    .loss { color: #c0392b; font-weight: 600; }
-    .category-vegetables { border-left-color: #27ae60; }
-    .category-grains { border-left-color: #f39c12; }
-    .category-fruits { border-left-color: #9b59b6; }
-    .category-other { border-left-color: #3498db; }
-    .crop-category { padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; text-transform: uppercase; }
-    .crop-category.vegetables { background: #d5f5e3; color: #1e8449; }
-    .crop-category.grains { background: #fdebd0; color: #b9770e; }
-    .crop-category.fruits { background: #ebdef0; color: #7d3c98; }
-    .crop-category.other { background: #d6eaf8; color: #2471a3; }
-    .input-group { display: flex; flex-direction: column; gap: 4px; }
-    .input-group label { font-size: 0.75rem; color: #5a6e7e; font-weight: 500; }
-    .farm-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
-    .farm-stat { background: #f8fafc; padding: 0.8rem; border-radius: 16px; text-align: center; }
-    .farm-stat .label { font-size: 0.7rem; color: #5a6e7e; text-transform: uppercase; }
-    .farm-stat .val { font-size: 1.2rem; font-weight: 600; color: #1e2a3a; }
-    .mood-btn { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #ddd; background: white; cursor: pointer; font-size: 1.2rem; transition: 0.2s; }
-    .mood-btn:hover, .mood-btn.selected { transform: scale(1.1); border-color: #1f6e3f; background: #e9f3ed; }
-    .water-track { display: flex; align-items: center; gap: 0.5rem; }
-    .water-track button { width: 36px; height: 36px; border-radius: 50%; border: none; background: #3498db; color: white; cursor: pointer; font-size: 1rem; }
-    .water-track button:hover { background: #2980b9; }
-    .water-track .count { font-size: 1.2rem; font-weight: 600; min-width: 60px; text-align: center; }
-    .meal-item { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
-    .meal-item select, .meal-item input { padding: 0.4rem 0.8rem; font-size: 0.85rem; }
-    .journal-textarea { width: 100%; min-height: 80px; resize: vertical; border-radius: 16px; padding: 0.8rem; }
-    .streak-badge { background: linear-gradient(135deg, #f39c12, #e67e22); color: white; padding: 0.2rem 0.8rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
-    .journal-entry { background: #fffbe6; border-left-color: #f39c12; }
-    .savings-progress { background: #e8f5e9; border-radius: 10px; height: 20px; width: 100%; overflow: hidden; margin: 0.5rem 0; }
-    .savings-progress-bar { height: 100%; background: linear-gradient(90deg, #27ae60, #2ecc71); transition: width 0.3s; }
-    .expense-category { padding: 2px 10px; border-radius: 12px; font-size: 0.75rem; text-transform: uppercase; }
-    .expense-category.food { background: #fadbd8; color: #c0392b; }
-    .expense-category.transport { background: #d6eaf8; color: #2471a3; }
-    .expense-category.utilities { background: #fdebd0; color: #b9770e; }
-    .expense-category.entertainment { background: #e8daef; color: #7d3c98; }
-    .expense-category.healthcare { background: #d5f5e3; color: #1e8449; }
-    .expense-category.other { background: #e5e8e8; color: #5d6d7e; }
-    .recurring-badge { background: #3498db; color: white; padding: 0.2rem 0.6rem; border-radius: 10px; font-size: 0.65rem; margin-left: 0.5rem; }
-    .spending-chart { display: flex; align-items: flex-end; gap: 8px; height: 100px; padding: 10px 0; }
-    .spending-bar { flex: 1; background: #2b7a4b; border-radius: 4px 4px 0 0; min-height: 5px; position: relative; }
-    .spending-bar:hover { background: #1f6e3f; }
-    .spending-bar .tooltip { display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; white-space: nowrap; }
-    .spending-bar:hover .tooltip { display: block; }
-    .currency-select { background: white; border: 1px solid #dbe2ea; padding: 0.4rem 1rem; border-radius: 30px; font-size: 0.9rem; }
-    .priority-high { border-left-color: #e74c3c; }
-    .priority-medium { border-left-color: #f39c12; }
-    .priority-low { border-left-color: #3498db; }
-    .priority-badge { padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
-    .priority-badge.high { background: #fadbd8; color: #c0392b; }
-    .priority-badge.medium { background: #fdebd0; color: #b9770e; }
-    .priority-badge.low { background: #d6eaf8; color: #2471a3; }
-    .goal-category { padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; margin-left: 0.5rem; }
-    .goal-category.personal { background: #d5f5e3; color: #1e8449; }
-    .goal-category.work { background: #ebdef0; color: #7d3c98; }
-    .goal-category.health { background: #fdebd0; color: #b9770e; }
-    .deadline-badge { background: #e74c3c; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; margin-left: 0.5rem; }
-    .deadline-badge.overdue { background: #c0392b; animation: pulse 1s infinite; }
-    .deadline-badge.soon { background: #f39c12; }
-    .deadline-badge.ok { background: #27ae60; }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
-    .subtask-list { margin-left: 1.5rem; margin-top: 0.5rem; }
-    .subtask-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0; font-size: 0.9rem; }
-    .subtask-item input[type="checkbox"] { width: 16px; height: 16px; }
-    .subtask-item.completed { text-decoration: line-through; opacity: 0.6; }
-    .progress-bar { background: #e8f5e9; border-radius: 10px; height: 12px; width: 100%; overflow: hidden; margin: 0.5rem 0; }
-    .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #27ae60, #2ecc71); transition: width 0.3s; }
-    .goal-actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
-    .report-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; }
-    .report-card { background: white; border-radius: 20px; padding: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-    .report-card h3 { margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
-    .chart-container { position: relative; height: 200px; }
-    .analytics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
-    .analytics-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1.2rem; border-radius: 16px; text-align: center; }
-    .analytics-card.green { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
-    .analytics-card.orange { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
-    .analytics-card.blue { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
-    .analytics-card .label { font-size: 0.75rem; opacity: 0.9; }
-    .analytics-card .value { font-size: 1.8rem; font-weight: 700; }
-    .export-btns { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-    .export-btns button { padding: 0.5rem 1rem; font-size: 0.85rem; }
-    .compare-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-    .compare-table th, .compare-table td { padding: 0.8rem; text-align: left; border-bottom: 1px solid #e4ecf5; }
-    .compare-table th { background: #f8fafc; font-weight: 600; }
-    .compare-table .positive { color: #27ae60; }
-    .compare-table .negative { color: #e74c3c; }
-    .dashboard-viz { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-    .mini-chart { height: 120px; }
-    .theme-toggle { background: var(--bg-card); border: 1px solid var(--border-color); padding: 0.5rem 1rem; border-radius: 30px; cursor: pointer; font-size: 1.2rem; }
-    .settings-bar { display: flex; gap: 0.5rem; align-items: center; }
-    .data-btns { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem; }
-    .data-btns button { font-size: 0.8rem; padding: 0.4rem 0.8rem; }
-    .shortcut-hint { font-size: 0.7rem; color: var(--text-muted); margin-left: 0.5rem; }
-    .notification-panel { position: fixed; top: 1rem; right: 1rem; z-index: 1000; max-width: 300px; }
-    .toast { background: var(--bg-card); padding: 1rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); margin-bottom: 0.5rem; animation: slideIn 0.3s ease; display: flex; align-items: center; gap: 0.5rem; }
-    .toast.success { border-left: 4px solid #27ae60; }
-    .toast.warning { border-left: 4px solid #f39c12; }
-    .toast.error { border-left: 4px solid #e74c3c; }
-    .toast.info { border-left: 4px solid #3498db; }
-    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-    .media-panel { background: var(--bg-card); border-radius: 20px; padding: 1rem; margin-top: 1rem; }
-    .media-tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
-    .media-tabs button { padding: 0.5rem 1rem; border: none; background: var(--bg-main); border-radius: 20px; cursor: pointer; }
-    .media-tabs button.active { background: var(--accent); color: white; }
-    .voice-recorder { display: flex; align-items: center; gap: 1rem; padding: 1rem; background: var(--bg-main); border-radius: 16px; }
-    .voice-btn { width: 50px; height: 50px; border-radius: 50%; border: none; background: #e74c3c; color: white; cursor: pointer; font-size: 1.2rem; }
-    .voice-btn.recording { animation: pulse 1s infinite; }
-    .voice-btn.recording { background: #c0392b; }
-    .voice-waveform { flex: 1; height: 40px; background: var(--bg-main); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); }
-    .camera-preview { width: 100%; max-width: 400px; border-radius: 16px; background: #000; margin: 0.5rem 0; }
-    .doc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.5rem; }
-    .doc-item { background: var(--bg-main); border-radius: 12px; padding: 0.5rem; text-align: center; }
-    .doc-item img { width: 100%; height: 80px; object-fit: cover; border-radius: 8px; }
-    .gallery-item { position: relative; border-radius: 12px; overflow: hidden; }
-    .gallery-item img { width: 100%; height: 100px; object-fit: cover; }
-    .gallery-item .overlay { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.5); color: white; padding: 0.25rem; font-size: 0.7rem; }
-    .notification-settings { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
-    .notification-settings label { display: flex; align-items: center; gap: 0.5rem; }
-    [data-theme="dark"] .stat-card, [data-theme="dark"] .card-panel { background: var(--bg-card); border-color: var(--border-color); }
-    [data-theme="dark"] input, [data-theme="dark"] textarea, [data-theme="dark"] select { background: var(--bg-main); border-color: var(--border-color); color: var(--text-main); }
-    [data-theme="dark"] .list-item { background: var(--bg-main); }
-    [data-theme="dark"] .analytics-card { box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
-    @media (max-width: 700px) {
-      .row-2col { grid-template-columns: 1fr; }
-      .app-header { flex-direction: column; align-items: stretch; gap: 1rem; }
-      .nav-tabs { justify-content: center; overflow-x: auto; }
-      .nav-tabs button { padding: 0.4rem 0.8rem; font-size: 0.8rem; white-space: nowrap; }
-      .analytics-grid { grid-template-columns: repeat(2, 1fr); }
-      .dashboard-viz { grid-template-columns: 1fr; }
-      .report-grid { grid-template-columns: 1fr; }
-      .flex-row { flex-direction: column; align-items: stretch; }
-      .input-group { width: 100%; }
-      .dashboard-grid { grid-template-columns: repeat(2, 1fr); }
-      .stat-card { padding: 0.8rem; }
-      .stat-card .value { font-size: 1.2rem; }
-      .app-header h1 { font-size: 1.4rem; }
-    }
-    @media (max-width: 400px) { .dashboard-grid { grid-template-columns: 1fr; } }
-  </style>
-</head>
-<body>
-<div class="notification-panel" id="notificationPanel"></div>
-<div class="app-header">
-  <h1><i class="fas fa-leaf"></i> Life & Farm</h1>
-  <div class="settings-bar">
-    <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">🌙</button>
-    <button class="outline" id="exportDataBtn" title="Export data">📤</button>
-    <button class="outline" id="importDataBtn" title="Import data">📥</button>
-    <input type="file" id="importFile" accept=".json" style="display:none;">
-  </div>
-  <div class="nav-tabs">
-    <button class="active" data-page="dashboard"><i class="fas fa-chart-pie"></i> Dashboard</button>
-    <button data-page="farm"><i class="fas fa-tractor"></i> Farm</button>
-    <button data-page="daily"><i class="fas fa-clock"></i> Daily</button>
-    <button data-page="money"><i class="fas fa-wallet"></i> Money</button>
-    <button data-page="goals"><i class="fas fa-bullseye"></i> Goals</button>
-    <button data-page="reports"><i class="fas fa-file-alt"></i> Reports</button>
-    <button data-page="profile"><i class="fas fa-user"></i> Profile</button>
-  </div>
-  <div class="shortcut-hint">Press ? for shortcuts</div>
-</div>
-
-<div id="page-dashboard" class="page active">
-  <div class="dashboard-grid" id="dashStats"></div>
-  <div class="row-2col">
-    <div class="card-panel"><h2><i class="fas fa-seedling"></i> Recent farm</h2><div id="dashFarm"></div></div>
-    <div class="card-panel"><h2><i class="fas fa-list-check"></i> Goals progress</h2><div id="dashGoals"></div></div>
-  </div>
-  <div class="card-panel"><h2><i class="fas fa-bell"></i> Reminders</h2><div id="dashReminders"></div></div>
-</div>
-
-<div id="page-farm" class="page">
-  <div class="farm-stats" id="farmStats"></div>
-  <div class="card-panel">
-    <h2><i class="fas fa-plus-circle"></i> Add farm activity</h2>
-    <div class="flex-row" style="margin-bottom: 1rem;">
-      <div class="input-group">
-        <label>Crop Name</label>
-        <input type="text" id="farmCrop" placeholder="Crop name" value="Wheat">
-      </div>
-      <div class="input-group">
-        <label>Category</label>
-        <select id="farmCategory">
-          <option value="grains">Grains</option>
-          <option value="vegetables">Vegetables</option>
-          <option value="fruits">Fruits</option>
-          <option value="other">Other</option>
-        </select>
-      </div>
-      <div class="input-group">
-        <label>Field / Location</label>
-        <input type="text" id="farmField" placeholder="Field / location" value="North">
-      </div>
-    </div>
-    <div class="flex-row" style="margin-bottom: 1rem;">
-      <div class="input-group">
-        <label>Field Size (m²)</label>
-        <input type="number" id="farmSize" placeholder="m²" value="100">
-      </div>
-      <div class="input-group">
-        <label>Season</label>
-        <select id="farmSeason">
-          <option value="spring">Spring</option>
-          <option value="summer">Summer</option>
-          <option value="autumn">Autumn</option>
-          <option value="winter">Winter</option>
-        </select>
-      </div>
-      <div class="input-group">
-        <label>Planting Date</label>
-        <input type="date" id="farmPlantDate">
-      </div>
-    </div>
-    <div class="flex-row" style="margin-bottom: 1rem;">
-      <div class="input-group">
-        <label>Cost ($)</label>
-        <input type="number" id="farmCost" placeholder="Cost $" value="120">
-      </div>
-      <div class="input-group">
-        <label>Selling Price ($/kg)</label>
-        <input type="number" id="farmPrice" placeholder="$/kg" value="0.5">
-      </div>
-      <div class="input-group">
-        <label>Harvest (kg)</label>
-        <input type="number" id="farmHarvest" placeholder="Harvest (kg)" value="340">
-      </div>
-    </div>
-    <div class="flex-row">
-      <div class="input-group">
-        <label>Fertilizer Cost ($)</label>
-        <input type="number" id="farmFertilizer" placeholder="$" value="0">
-      </div>
-      <div class="input-group">
-        <label>Pesticide Cost ($)</label>
-        <input type="number" id="farmPesticide" placeholder="$" value="0">
-      </div>
-      <div class="input-group" style="justify-content: flex-end;">
-        <button class="primary" id="addFarmBtn"><i class="fas fa-save"></i> Log</button>
-      </div>
-    </div>
-  </div>
-  <div class="card-panel"><h2><i class="fas fa-list"></i> Farm log</h2><div id="farmList"></div></div>
-  <div class="card-panel"><h2><i class="fas fa-chart-line"></i> Profit/Loss by Crop</h2><div id="farmProfitList"></div></div>
-</div>
-
-<div id="page-daily" class="page">
-  <div class="row-2col">
-    <div class="card-panel">
-      <h2><i class="fas fa-smile"></i> Mood Tracker</h2>
-      <div class="flex-row" style="gap: 0.5rem;">
-        <button class="mood-btn" data-mood="😊" title="Great">😊</button>
-        <button class="mood-btn" data-mood="🙂" title="Good">🙂</button>
-        <button class="mood-btn" data-mood="😐" title="Okay">😐</button>
-        <button class="mood-btn" data-mood="😔" title="Low">😔</button>
-        <button class="mood-btn" data-mood="😢" title="Bad">😢</button>
-      </div>
-      <div style="margin-top: 1rem;"><strong>Today:</strong> <span id="todayMood">Not logged</span></div>
-      <div id="moodHistory" style="margin-top: 1rem;"></div>
-    </div>
-    <div class="card-panel">
-      <h2><i class="fas fa-tint"></i> Water Intake</h2>
-      <div class="water-track">
-        <button id="waterMinus">-</button>
-        <span class="count" id="waterCount">0</span>
-        <span>glasses</span>
-        <button id="waterPlus">+</button>
-      </div>
-      <div style="margin-top: 0.5rem; font-size: 0.85rem; color: #5a6e7e;">Target: 8 glasses/day</div>
-    </div>
-  </div>
-  <div class="card-panel">
-    <h2><i class="fas fa-utensils"></i> Meals</h2>
-    <div class="flex-row" style="margin-bottom: 1rem;">
-      <select id="mealType">
-        <option value="breakfast">Breakfast</option>
-        <option value="lunch">Lunch</option>
-        <option value="dinner">Dinner</option>
-        <option value="snack">Snack</option>
-      </select>
-      <input type="text" id="mealDesc" placeholder="What did you eat?" style="flex:1;">
-      <button class="primary" id="addMealBtn">Add</button>
-    </div>
-    <div id="mealList"></div>
-  </div>
-  <div class="card-panel">
-    <h2><i class="fas fa-pen"></i> Today's Routine</h2>
-    <div class="flex-row">
-      <input type="number" id="dailySleep" placeholder="Sleep (h)" value="7.5">
-      <input type="number" id="dailyWork" placeholder="Work (h)" value="6">
-      <input type="number" id="dailyPrayer" placeholder="Prayer (min)" value="30">
-      <input type="number" id="dailyExercise" placeholder="Exercise (min)" value="45">
-      <input type="number" id="dailyStudy" placeholder="Study (min)" value="60">
-      <button class="primary" id="addDailyBtn"><i class="fas fa-check"></i> Log</button>
-    </div>
-    <div style="margin-top: 1rem;" id="dailyList"></div>
-  </div>
-  <div class="card-panel">
-    <h2><i class="fas fa-book"></i> Daily Journal</h2>
-    <textarea id="journalInput" class="journal-textarea" placeholder="Write your thoughts for today..."></textarea>
-    <button class="primary" id="addJournalBtn" style="margin-top: 0.5rem;">Save Entry</button>
-    <div id="journalList" style="margin-top: 1rem;"></div>
-  </div>
-  <div class="card-panel">
-    <h2><i class="fas fa-habit"></i> Habits</h2>
-    <div class="flex-row"><input type="text" id="habitInput" placeholder="New habit"><button class="primary" id="addHabitBtn">+</button></div>
-    <div id="habitList" style="margin-top: 1rem;"></div>
-  </div>
-</div>
-
-<div id="page-money" class="page">
-  <div class="flex-row" style="margin-bottom: 1rem; justify-content: space-between;">
-    <div class="card-panel" style="flex: 1; margin-bottom: 0; margin-right: 1rem;">
-      <h2><i class="fas fa-coins"></i> Balance & Transactions</h2>
-      <div class="flex-row">
-        <select id="moneyCurrency" class="currency-select">
-          <option value="$">USD ($)</option>
-          <option value="€">EUR (€)</option>
-          <option value="£">GBP (£)</option>
-          <option value="¥">JPY (¥)</option>
-          <option value="₹">INR (₹)</option>
-        </select>
-      </div>
-    </div>
-    <div class="card-panel" style="flex: 1; margin-bottom: 0;">
-      <h2><i class="fas fa-piggy-bank"></i> Quick Add</h2>
-      <div class="flex-row">
-        <input type="number" id="moneySalary" placeholder="Salary" value="2500">
-        <input type="number" id="moneyIncome" placeholder="Extra income" value="300">
-        <input type="number" id="moneyExpense" placeholder="Expense" value="150">
-        <button class="primary" id="addMoneyBtn"><i class="fas fa-calculator"></i> Update</button>
-      </div>
-    </div>
-  </div>
-  <div class="row-2col">
-    <div class="card-panel">
-      <h2><i class="fas fa-chart-pie"></i> Spending by Category</h2>
-      <div class="spending-chart" id="spendingChart"></div>
-      <div id="spendingLegend"></div>
-    </div>
-    <div class="card-panel">
-      <h2><i class="fas fa-piggy-bank"></i> Savings Goals</h2>
-      <div class="flex-row" style="margin-bottom: 1rem;">
-        <input type="text" id="savingsName" placeholder="Goal name" style="flex:1;">
-        <input type="number" id="savingsTarget" placeholder="Target">
-        <input type="number" id="savingsCurrent" placeholder="Current">
-        <button class="primary" id="addSavingsBtn">Add</button>
-      </div>
-      <div id="savingsList"></div>
-    </div>
-  </div>
-  <div class="row-2col">
-    <div class="card-panel">
-      <h2><i class="fas fa-history"></i> Recent Transactions</h2>
-      <div style="margin-bottom: 1rem;"><strong>Balance: </strong><span id="balanceDisplay">$0</span></div>
-      <div id="moneyList"></div>
-    </div>
-    <div class="card-panel">
-      <h2><i class="fas fa-redo"></i> Recurring Expenses</h2>
-      <div class="flex-row" style="margin-bottom: 1rem;">
-        <input type="text" id="recurringName" placeholder="Expense name" style="flex:1;">
-        <input type="number" id="recurringAmount" placeholder="Amount">
-        <select id="recurringFreq">
-          <option value="weekly">Weekly</option>
-          <option value="monthly" selected>Monthly</option>
-          <option value="yearly">Yearly</option>
-        </select>
-        <button class="primary" id="addRecurringBtn">Add</button>
-      </div>
-      <div id="recurringList"></div>
-    </div>
-  </div>
-  <div class="card-panel">
-    <h2><i class="fas fa-layer-group"></i> Budget Categories</h2>
-    <div class="flex-row">
-      <select id="expenseCategory">
-        <option value="food">Food</option>
-        <option value="transport">Transport</option>
-        <option value="utilities">Utilities</option>
-        <option value="entertainment">Entertainment</option>
-        <option value="healthcare">Healthcare</option>
-        <option value="other">Other</option>
-      </select>
-      <input type="number" id="expenseAmount" placeholder="Amount">
-      <input type="text" id="expenseDesc" placeholder="Description">
-      <button class="primary" id="addExpenseBtn">Add Expense</button>
-    </div>
-    <div id="expenseByCategory"></div>
-  </div>
-</div>
-
-<div id="page-goals" class="page">
-  <div class="card-panel">
-    <h2><i class="fas fa-flag"></i> Add New Goal</h2>
-    <div class="flex-row" style="margin-bottom: 1rem;">
-      <div class="input-group">
-        <label>Goal Title</label>
-        <input type="text" id="goalTitle" placeholder="Goal" value="Harvest 500kg">
-      </div>
-      <div class="input-group">
-        <label>Category</label>
-        <select id="goalCategory">
-          <option value="personal">Personal</option>
-          <option value="work">Work</option>
-          <option value="health">Health</option>
-        </select>
-      </div>
-      <div class="input-group">
-        <label>Priority</label>
-        <select id="goalPriority">
-          <option value="high">High</option>
-          <option value="medium" selected>Medium</option>
-          <option value="low">Low</option>
-        </select>
-      </div>
-    </div>
-    <div class="flex-row" style="margin-bottom: 1rem;">
-      <div class="input-group">
-        <label>Period</label>
-        <select id="goalPeriod">
-          <option value="daily">Daily</option>
-          <option value="monthly" selected>Monthly</option>
-          <option value="yearly">Yearly</option>
-        </select>
-      </div>
-      <div class="input-group">
-        <label>Target</label>
-        <input type="number" id="goalTarget" placeholder="Target" value="500">
-      </div>
-      <div class="input-group">
-        <label>Current Progress</label>
-        <input type="number" id="goalCurrent" placeholder="Current" value="0">
-      </div>
-      <div class="input-group">
-        <label>Deadline</label>
-        <input type="date" id="goalDeadline">
-      </div>
-    </div>
-    <div class="flex-row">
-      <div class="input-group" style="flex:1;">
-        <label>Subtasks (comma separated)</label>
-        <input type="text" id="goalSubtasks" placeholder="Task 1, Task 2, Task 3">
-      </div>
-      <div class="input-group" style="justify-content: flex-end;">
-        <button class="primary" id="addGoalBtn"><i class="fas fa-plus"></i> Add Goal</button>
-      </div>
-    </div>
-  </div>
-  <div class="card-panel">
-    <h2><i class="fas fa-tasks"></i> Your Goals</h2>
-    <div class="flex-row" style="margin-bottom: 1rem;">
-      <select id="filterGoalCategory">
-        <option value="all">All Categories</option>
-        <option value="personal">Personal</option>
-        <option value="work">Work</option>
-        <option value="health">Health</option>
-      </select>
-      <select id="filterGoalPriority">
-        <option value="all">All Priorities</option>
-        <option value="high">High</option>
-        <option value="medium">Medium</option>
-        <option value="low">Low</option>
-      </select>
-    </div>
-    <div id="goalList"></div>
-  </div>
-  <div class="card-panel">
-    <h2><i class="fas fa-clock"></i> Upcoming Deadlines</h2>
-    <div id="goalDeadlines"></div>
-  </div>
-</div>
-
-<div id="page-reports" class="page">
-  <div class="analytics-grid">
-    <div class="analytics-card"><div class="label">Total Harvest</div><div class="value" id="anaHarvest">0 kg</div></div>
-    <div class="analytics-card green"><div class="label">Farm Profit</div><div class="value" id="anaProfit">$0</div></div>
-    <div class="analytics-card orange"><div class="label">Goals Done</div><div class="value" id="anaGoals">0</div></div>
-    <div class="analytics-card blue"><div class="label">Balance</div><div class="value" id="anaBalance">$0</div></div>
-  </div>
-  <div class="report-grid">
-    <div class="report-card">
-      <h3><i class="fas fa-chart-line"></i> Farm Revenue Trend</h3>
-      <div class="chart-container"><canvas id="farmTrendChart"></canvas></div>
-    </div>
-    <div class="report-card">
-      <h3><i class="fas fa-chart-pie"></i> Expense Breakdown</h3>
-      <div class="chart-container"><canvas id="expenseChart"></canvas></div>
-    </div>
-  </div>
-  <div class="report-grid">
-    <div class="report-card">
-      <h3><i class="fas fa-chart-bar"></i> Daily Moods</h3>
-      <div class="chart-container"><canvas id="moodChart"></canvas></div>
-    </div>
-    <div class="report-card">
-      <h3><i class="fas fa-tint"></i> Water Intake Trend</h3>
-      <div class="chart-container"><canvas id="waterChart"></canvas></div>
-    </div>
-  </div>
-  <div class="card-panel">
-    <h2><i class="fas fa-balance-scale"></i> Weekly vs Monthly Comparison</h2>
-    <div id="comparisonTable"></div>
-  </div>
-  <div class="card-panel">
-    <h2><i class="fas fa-file-export"></i> Export & Share</h2>
-    <div class="export-btns">
-      <button class="primary" id="exportPdfBtn"><i class="fas fa-file-pdf"></i> Export PDF</button>
-      <button class="primary" id="emailReportBtn"><i class="fas fa-envelope"></i> Email Report</button>
-      <button class="primary" id="reportDailyBtn"><i class="fas fa-calendar-day"></i> Daily Summary</button>
-      <button class="primary" id="reportWeeklyBtn"><i class="fas fa-calendar-week"></i> Weekly Summary</button>
-      <button class="primary" id="reportMonthlyBtn"><i class="fas fa-calendar-alt"></i> Monthly Summary</button>
-    </div>
-    <div id="reportContent" style="margin-top: 1.2rem; background: #f2f8fe; padding: 1rem; border-radius: 24px;"></div>
-  </div>
-</div>
-
-<div id="page-profile" class="page">
-  <div class="card-panel">
-    <h2><i class="fas fa-bell"></i> Notification Settings</h2>
-    <div class="notification-settings">
-      <label><input type="checkbox" id="notifDaily" checked> Daily Summary</label>
-      <label><input type="checkbox" id="notifGoals" checked> Goal Deadlines</label>
-      <label><input type="checkbox" id="notifHabits" checked> Habit Reminders</label>
-      <label><input type="checkbox" id="notifBrowser"> Browser Notifications</label>
-    </div>
-    <button class="primary" id="requestNotifBtn">Enable Browser Notifications</button>
-    <div id="notifStatus" class="small-note" style="margin-top: 0.5rem;"></div>
-  </div>
-  <div class="card-panel">
-    <h2><i class="fas fa-user-circle"></i> Profile & Notes</h2>
-    <div class="flex-row"><input type="text" id="profileName" placeholder="Your name" value="Farmer Joe"></div>
-    <div style="margin: 1rem 0;"><h3><i class="fas fa-image"></i> Photos Evidence</h3>
-      <div class="photo-grid" id="photoGrid"></div>
-      <input type="file" id="photoUpload" accept="image/*" multiple capture="environment">
-    </div>
-  </div>
-  <div class="card-panel">
-    <h2><i class="fas fa-camera"></i> Camera & Media</h2>
-    <div class="media-tabs">
-      <button class="active" data-media="camera">Camera</button>
-      <button data-media="voice">Voice Notes</button>
-      <button data-media="gallery">Gallery</button>
-      <button data-media="docs">Documents</button>
-    </div>
-    <div id="mediaCamera" class="media-panel">
-      <button class="primary" id="openCameraBtn"><i class="fas fa-camera"></i> Open Camera</button>
-      <video id="cameraPreview" class="camera-preview" autoplay playsinline style="display:none;"></video>
-      <canvas id="cameraCanvas" style="display:none;"></canvas>
-      <button class="primary" id="takePhotoBtn" style="display:none; margin-top:0.5rem;"><i class="fas fa-camera"></i> Capture</button>
-      <div class="photo-grid" id="cameraPhotos"></div>
-    </div>
-    <div id="mediaVoice" class="media-panel" style="display:none;">
-      <div class="voice-recorder">
-        <button class="voice-btn" id="recordBtn"><i class="fas fa-microphone"></i></button>
-        <div class="voice-waveform" id="voiceStatus">Press to record</div>
-        <button class="outline" id="stopRecordBtn" style="display:none;">Stop</button>
-      </div>
-      <div id="voiceList" style="margin-top:1rem;"></div>
-    </div>
-    <div id="mediaGallery" class="media-panel" style="display:none;">
-      <div class="flex-row" style="margin-bottom:1rem;">
-        <input type="text" id="galleryFilter" placeholder="Filter photos...">
-        <select id="gallerySort"><option value="newest">Newest</option><option value="oldest">Oldest</option></select>
-      </div>
-      <div class="photo-grid" id="galleryGrid"></div>
-    </div>
-    <div id="mediaDocs" class="media-panel" style="display:none;">
-      <div class="flex-row"><input type="file" id="docUpload" accept="image/*" capture="environment"><button class="primary" id="scanDocBtn">Scan Document</button></div>
-      <div class="doc-grid" id="docGrid"></div>
-    </div>
-  </div>
-  <div class="card-panel">
-    <h3><i class="fas fa-sticky-note"></i> Notes</h3>
-    <textarea id="noteInput" rows="2" placeholder="Write a note..." style="width:100%; border-radius:20px; padding: 0.8rem;"></textarea>
-    <button class="primary" id="addNoteBtn" style="margin-top: 8px;">Save note</button>
-    <div id="noteList" style="margin-top: 1rem;"></div>
-  </div>
-</div>
-
-<script>
-  console.log('Script starting...');
-  var data = { farm: [], daily: [], habits: [], money: [], goals: [], reminders: [], notes: [], photos: [], profileName: 'Farmer Joe', moods: [], meals: [], journals: [], habitStreaks: {}, water: [], savingsGoals: [], recurringExpenses: [], expenses: [], currency: '$', voiceNotes: [], documents: [], notifSettings: { daily: true, goals: true, habits: true, browser: false } };
-
-  function getCurrency() { return data.currency || '$'; }
-  function formatMoney(amount) { return getCurrency() + amount.toFixed(0); }
-
-  function loadData() {
-    try {
-      const raw = localStorage.getItem('farmLifeData');
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        for (let key in parsed) { if (data.hasOwnProperty(key)) data[key] = parsed[key]; }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🌾 Life & Farm Tracker</title>
+    <meta name="theme-color" content="#1f6e3f" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+      :root {
+        --bg-main: #f4f7fb;
+        --bg-card: white;
+        --text-main: #1e2a3a;
+        --text-muted: #5a6e7e;
+        --border-color: #eef3f8;
+        --accent: #1f6e3f;
+        --accent-light: #e9f3ed;
       }
-    } catch(e) { console.warn('load err', e); }
-  }
-  function saveData() { localStorage.setItem('farmLifeData', JSON.stringify(data)); renderAll(); }
+      [data-theme="dark"] {
+        --bg-main: #1a1a2e;
+        --bg-card: #16213e;
+        --text-main: #e4e6eb;
+        --text-muted: #b0b3b8;
+        --border-color: #2d3a5a;
+        --accent: #2ecc71;
+        --accent-light: #1e3a2f;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Segoe UI", Roboto, system-ui, sans-serif;
+      }
+      body {
+        background: var(--bg-main);
+        color: var(--text-main);
+        padding: 1rem;
+        max-width: 1400px;
+        margin: 0 auto;
+        transition:
+          background 0.3s,
+          color 0.3s;
+      }
+      .app-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 1.5rem;
+        background: var(--bg-card);
+        padding: 1rem 1.5rem;
+        border-radius: 30px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.03);
+      }
+      .app-header h1 {
+        font-weight: 600;
+        font-size: 1.8rem;
+        letter-spacing: -0.5px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .app-header h1 i {
+        color: var(--accent);
+      }
+      .nav-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.3rem;
+        background: var(--border-color);
+        padding: 0.3rem;
+        border-radius: 40px;
+      }
+      .nav-tabs button {
+        background: transparent;
+        border: none;
+        padding: 0.5rem 1.1rem;
+        border-radius: 30px;
+        font-weight: 500;
+        color: var(--text-main);
+        transition: 0.2s;
+        cursor: pointer;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .nav-tabs button i {
+        font-size: 1rem;
+      }
+      .nav-tabs button.active {
+        background: var(--bg-card);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
+        color: var(--accent);
+      }
+      .nav-tabs button:hover {
+        background: white;
+      }
+      .page {
+        display: none;
+        margin-top: 1.2rem;
+      }
+      .page.active {
+        display: block;
+      }
+      .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 1.2rem;
+        margin-bottom: 2rem;
+      }
+      .stat-card {
+        background: var(--bg-card);
+        padding: 1.2rem 1rem;
+        border-radius: 24px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+        border: 1px solid var(--border-color);
+        transition: 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .stat-card i {
+        font-size: 2rem;
+        width: 3rem;
+        height: 3rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--accent-light);
+        border-radius: 18px;
+        color: var(--accent);
+      }
+      .stat-card div {
+        flex: 1;
+      }
+      .stat-card h4 {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-muted);
+      }
+      .stat-card .value {
+        font-size: 1.5rem;
+        font-weight: 600;
+      }
+      .card-panel {
+        background: var(--bg-card);
+        border-radius: 28px;
+        padding: 1.5rem 1.8rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.02);
+        border: 1px solid var(--border-color);
+      }
+      .card-panel h2 {
+        font-weight: 500;
+        font-size: 1.3rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--text-main);
+      }
+      .flex-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: center;
+      }
+      input,
+      textarea,
+      select {
+        background: var(--bg-main);
+        border: 1px solid var(--border-color);
+        padding: 0.6rem 1rem;
+        border-radius: 30px;
+        font-size: 0.9rem;
+        outline: none;
+        transition: 0.2s;
+        color: var(--text-main);
+      }
+      input:focus,
+      textarea:focus,
+      select:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(43, 122, 75, 0.1);
+      }
+      button.primary {
+        background: var(--accent);
+        border: none;
+        color: white;
+        padding: 0.6rem 1.4rem;
+        border-radius: 40px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      button.primary:hover {
+        background: #155a32;
+        transform: scale(0.97);
+      }
+      button.outline {
+        background: transparent;
+        border: 1px solid var(--border-color);
+        padding: 0.5rem 1.2rem;
+        border-radius: 40px;
+        cursor: pointer;
+        color: var(--text-main);
+      }
+      .list-item {
+        background: var(--bg-main);
+        border-radius: 20px;
+        padding: 0.8rem 1.2rem;
+        margin-bottom: 0.6rem;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        border-left: 5px solid var(--accent);
+      }
+      .badge {
+        background: var(--accent-light);
+        padding: 0.2rem 1rem;
+        border-radius: 40px;
+        font-size: 0.75rem;
+        color: var(--text-main);
+      }
+      .small-note {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+      }
+      .photo-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin: 10px 0;
+      }
+      .photo-grid img {
+        width: 70px;
+        height: 70px;
+        object-fit: cover;
+        border-radius: 16px;
+        border: 2px solid var(--border-color);
+      }
+      hr {
+        border: none;
+        border-top: 1px solid var(--border-color);
+        margin: 1.2rem 0;
+      }
+      .row-2col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+      }
+      .profit {
+        color: #27ae60;
+        font-weight: 600;
+      }
+      .loss {
+        color: #c0392b;
+        font-weight: 600;
+      }
+      .farm-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+      .farm-stat {
+        background: var(--bg-main);
+        padding: 0.8rem;
+        border-radius: 16px;
+        text-align: center;
+      }
+      .farm-stat .label {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+      }
+      .farm-stat .val {
+        font-size: 1.2rem;
+        font-weight: 600;
+      }
+      .mood-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: 2px solid var(--border-color);
+        background: var(--bg-card);
+        cursor: pointer;
+        font-size: 1.2rem;
+        transition: 0.2s;
+      }
+      .mood-btn:hover,
+      .mood-btn.selected {
+        transform: scale(1.1);
+        border-color: var(--accent);
+        background: var(--accent-light);
+      }
+      .input-group {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .input-group label {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        font-weight: 500;
+      }
+      .savings-progress {
+        background: var(--bg-main);
+        border-radius: 10px;
+        height: 20px;
+        width: 100%;
+        overflow: hidden;
+        margin: 0.5rem 0;
+      }
+      .savings-progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #27ae60, #2ecc71);
+        transition: width 0.3s;
+      }
+      .progress-bar {
+        background: var(--bg-main);
+        border-radius: 10px;
+        height: 12px;
+        width: 100%;
+        overflow: hidden;
+        margin: 0.5rem 0;
+      }
+      .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #27ae60, #2ecc71);
+        transition: width 0.3s;
+      }
+      .expense-category {
+        padding: 2px 10px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+      }
+      .expense-category.food {
+        background: #fadbd8;
+        color: #c0392b;
+      }
+      .expense-category.transport {
+        background: #d6eaf8;
+        color: #2471a3;
+      }
+      .expense-category.utilities {
+        background: #fdebd0;
+        color: #b9770e;
+      }
+      .expense-category.entertainment {
+        background: #e8daef;
+        color: #7d3c98;
+      }
+      .expense-category.healthcare {
+        background: #d5f5e3;
+        color: #1e8449;
+      }
+      .expense-category.other {
+        background: #e5e8e8;
+        color: #5d6d7e;
+      }
+      .crop-category {
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+      }
+      .crop-category.vegetables {
+        background: #d5f5e3;
+        color: #1e8449;
+      }
+      .crop-category.grains {
+        background: #fdebd0;
+        color: #b9770e;
+      }
+      .crop-category.fruits {
+        background: #ebdef0;
+        color: #7d3c98;
+      }
+      .crop-category.other {
+        background: #d6eaf8;
+        color: #2471a3;
+      }
+      .spending-chart {
+        display: flex;
+        align-items: flex-end;
+        gap: 8px;
+        height: 100px;
+        padding: 10px 0;
+      }
+      .spending-bar {
+        flex: 1;
+        background: var(--accent);
+        border-radius: 4px 4px 0 0;
+        min-height: 5px;
+        position: relative;
+      }
+      .spending-bar .tooltip {
+        display: none;
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #333;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        white-space: nowrap;
+      }
+      .spending-bar:hover .tooltip {
+        display: block;
+      }
+      .analytics-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+      .analytics-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.2rem;
+        border-radius: 16px;
+        text-align: center;
+      }
+      .analytics-card.green {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      }
+      .analytics-card.orange {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      }
+      .analytics-card.blue {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      }
+      .analytics-card .label {
+        font-size: 0.75rem;
+        opacity: 0.9;
+      }
+      .analytics-card .value {
+        font-size: 1.8rem;
+        font-weight: 700;
+      }
+      .report-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+      }
+      .report-card {
+        background: var(--bg-card);
+        border-radius: 20px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        border: 1px solid var(--border-color);
+      }
+      .report-card h3 {
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-main);
+      }
+      .chart-container {
+        position: relative;
+        height: 200px;
+      }
+      .theme-toggle {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        padding: 0.5rem 1rem;
+        border-radius: 30px;
+        cursor: pointer;
+        font-size: 1.2rem;
+      }
+      .settings-bar {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+      }
+      .notification-panel {
+        position: fixed;
+        top: 1rem;
+        right: 1rem;
+        z-index: 1000;
+        max-width: 300px;
+      }
+      .toast {
+        background: var(--bg-card);
+        padding: 1rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        margin-bottom: 0.5rem;
+        animation: slideIn 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        border-left: 4px solid var(--accent);
+      }
+      .toast.success {
+        border-left-color: #27ae60;
+      }
+      .toast.warning {
+        border-left-color: #f39c12;
+      }
+      .toast.error {
+        border-left-color: #e74c3c;
+      }
+      .toast.info {
+        border-left-color: #3498db;
+      }
+      @keyframes slideIn {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+      .deadline-badge {
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        margin-left: 0.5rem;
+        color: white;
+      }
+      .deadline-badge.overdue {
+        background: #e74c3c;
+        animation: pulse 1s infinite;
+      }
+      .deadline-badge.soon {
+        background: #f39c12;
+      }
+      .deadline-badge.ok {
+        background: #27ae60;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.7;
+        }
+      }
+      .priority-badge {
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+      .priority-badge.high {
+        background: #fadbd8;
+        color: #c0392b;
+      }
+      .priority-badge.medium {
+        background: #fdebd0;
+        color: #b9770e;
+      }
+      .priority-badge.low {
+        background: #d6eaf8;
+        color: #2471a3;
+      }
+      .goal-category {
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        margin-left: 0.5rem;
+      }
+      .goal-category.personal {
+        background: #d5f5e3;
+        color: #1e8449;
+      }
+      .goal-category.work {
+        background: #ebdef0;
+        color: #7d3c98;
+      }
+      .goal-category.health {
+        background: #fdebd0;
+        color: #b9770e;
+      }
+      .shortcut-hint {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        margin-left: 0.5rem;
+      }
+      .currency-select {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        padding: 0.4rem 1rem;
+        border-radius: 30px;
+        font-size: 0.9rem;
+        color: var(--text-main);
+      }
+      .camera-preview {
+        width: 100%;
+        max-width: 400px;
+        border-radius: 16px;
+        background: #000;
+        margin: 0.5rem 0;
+      }
+      .media-panel {
+        background: var(--bg-card);
+        border-radius: 20px;
+        padding: 1rem;
+        margin-top: 1rem;
+        border: 1px solid var(--border-color);
+      }
+      .media-tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+      }
+      .media-tabs button {
+        padding: 0.5rem 1rem;
+        border: none;
+        background: var(--bg-main);
+        border-radius: 20px;
+        cursor: pointer;
+        color: var(--text-main);
+      }
+      .media-tabs button.active {
+        background: var(--accent);
+        color: white;
+      }
+      .voice-recorder {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        background: var(--bg-main);
+        border-radius: 16px;
+      }
+      .voice-btn {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        border: none;
+        background: #e74c3c;
+        color: white;
+        cursor: pointer;
+        font-size: 1.2rem;
+      }
+      .voice-btn.recording {
+        animation: pulse 1s infinite;
+        background: #c0392b;
+      }
+      .voice-waveform {
+        flex: 1;
+        height: 40px;
+        background: var(--bg-main);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted);
+      }
+      .export-btns {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+      .export-btns button {
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+      }
+      .subtask-list {
+        margin-left: 1.5rem;
+        margin-top: 0.5rem;
+      }
+      .subtask-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.3rem 0;
+        font-size: 0.9rem;
+      }
+      .subtask-item.completed {
+        text-decoration: line-through;
+        opacity: 0.6;
+      }
+      .compare-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+      }
+      .compare-table th,
+      .compare-table td {
+        padding: 0.8rem;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+      }
+      .compare-table th {
+        background: var(--bg-main);
+        font-weight: 600;
+      }
+      .compare-table .positive {
+        color: #27ae60;
+      }
+      .compare-table .negative {
+        color: #e74c3c;
+      }
+      .streak-badge {
+        background: linear-gradient(135deg, #f39c12, #e67e22);
+        color: white;
+        padding: 0.2rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+      }
+      .journal-entry {
+        background: #fffbe6;
+        border-left-color: #f39c12;
+      }
+      .priority-high {
+        border-left-color: #e74c3c;
+      }
+      .priority-medium {
+        border-left-color: #f39c12;
+      }
+      .priority-low {
+        border-left-color: #3498db;
+      }
+      @media (max-width: 700px) {
+        .row-2col {
+          grid-template-columns: 1fr;
+        }
+        .app-header {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 1rem;
+        }
+        .nav-tabs {
+          justify-content: center;
+          overflow-x: auto;
+        }
+        .nav-tabs button {
+          padding: 0.4rem 0.8rem;
+          font-size: 0.8rem;
+          white-space: nowrap;
+        }
+        .analytics-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .report-grid {
+          grid-template-columns: 1fr;
+        }
+        .flex-row {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .input-group {
+          width: 100%;
+        }
+        .dashboard-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .stat-card {
+          padding: 0.8rem;
+        }
+        .stat-card .value {
+          font-size: 1.2rem;
+        }
+        .app-header h1 {
+          font-size: 1.4rem;
+        }
+      }
+      @media (max-width: 400px) {
+        .dashboard-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="notification-panel" id="notificationPanel"></div>
+    <div class="app-header">
+      <h1><i class="fas fa-leaf"></i> Life & Farm</h1>
+      <div class="settings-bar">
+        <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
+          🌙
+        </button>
+        <button class="outline" id="exportDataBtn" title="Export data">
+          📤
+        </button>
+        <button class="outline" id="importDataBtn" title="Import data">
+          📥
+        </button>
+        <input
+          type="file"
+          id="importFile"
+          accept=".json"
+          style="display: none"
+        />
+      </div>
+      <div class="nav-tabs">
+        <button class="active" data-page="dashboard">
+          <i class="fas fa-chart-pie"></i> Dashboard
+        </button>
+        <button data-page="farm"><i class="fas fa-tractor"></i> Farm</button>
+        <button data-page="daily"><i class="fas fa-clock"></i> Daily</button>
+        <button data-page="money"><i class="fas fa-wallet"></i> Money</button>
+        <button data-page="goals"><i class="fas fa-bullseye"></i> Goals</button>
+        <button data-page="reports">
+          <i class="fas fa-file-alt"></i> Reports
+        </button>
+        <button data-page="profile"><i class="fas fa-user"></i> Profile</button>
+      </div>
+      <div class="shortcut-hint">Press ? for shortcuts</div>
+    </div>
 
-  function getBalance() {
-    let bal = 0;
-    data.money.forEach(t => {
-      if (t.type === 'salary' || t.type === 'income') bal += t.amount;
-      else if (t.type === 'expense') bal -= t.amount;
-    });
-    return bal;
-  }
+    <!-- Dashboard -->
+    <div id="page-dashboard" class="page active">
+      <div class="dashboard-grid" id="dashStats"></div>
+      <div class="row-2col">
+        <div class="card-panel">
+          <h2><i class="fas fa-seedling"></i> Recent farm</h2>
+          <div id="dashFarm"></div>
+        </div>
+        <div class="card-panel">
+          <h2><i class="fas fa-list-check"></i> Goals progress</h2>
+          <div id="dashGoals"></div>
+        </div>
+      </div>
+      <div class="card-panel">
+        <h2><i class="fas fa-bell"></i> Reminders</h2>
+        <div id="dashReminders"></div>
+      </div>
+    </div>
 
-  function calculateProfit(farm) {
-    const revenue = (farm.harvest || 0) * (farm.price || 0);
-    const totalCost = (farm.cost || 0) + (farm.fertilizer || 0) + (farm.pesticide || 0);
-    return revenue - totalCost;
-  }
+    <!-- Farm -->
+    <div id="page-farm" class="page">
+      <div class="farm-stats" id="farmStats"></div>
+      <div class="card-panel">
+        <h2><i class="fas fa-plus-circle"></i> Add farm activity</h2>
+        <div class="flex-row">
+          <div class="input-group">
+            <label>Crop Name</label
+            ><input
+              type="text"
+              id="farmCrop"
+              placeholder="Crop name"
+              value="Wheat"
+            />
+          </div>
+          <div class="input-group">
+            <label>Category</label
+            ><select id="farmCategory">
+              <option value="grains">Grains</option>
+              <option value="vegetables">Vegetables</option>
+              <option value="fruits">Fruits</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label>Field / Location</label
+            ><input
+              type="text"
+              id="farmField"
+              placeholder="Field / location"
+              value="North"
+            />
+          </div>
+        </div>
+        <div class="flex-row">
+          <div class="input-group">
+            <label>Field Size (m²)</label
+            ><input type="number" id="farmSize" placeholder="m²" value="100" />
+          </div>
+          <div class="input-group">
+            <label>Season</label
+            ><select id="farmSeason">
+              <option value="spring">Spring</option>
+              <option value="summer">Summer</option>
+              <option value="autumn">Autumn</option>
+              <option value="winter">Winter</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label>Planting Date</label><input type="date" id="farmPlantDate" />
+          </div>
+        </div>
+        <div class="flex-row">
+          <div class="input-group">
+            <label>Cost ($)</label
+            ><input
+              type="number"
+              id="farmCost"
+              placeholder="Cost $"
+              value="120"
+            />
+          </div>
+          <div class="input-group">
+            <label>Selling Price ($/kg)</label
+            ><input
+              type="number"
+              id="farmPrice"
+              placeholder="$/kg"
+              value="0.5"
+            />
+          </div>
+          <div class="input-group">
+            <label>Harvest (kg)</label
+            ><input
+              type="number"
+              id="farmHarvest"
+              placeholder="Harvest (kg)"
+              value="340"
+            />
+          </div>
+        </div>
+        <div class="flex-row">
+          <div class="input-group">
+            <label>Fertilizer Cost ($)</label
+            ><input
+              type="number"
+              id="farmFertilizer"
+              placeholder="$"
+              value="0"
+            />
+          </div>
+          <div class="input-group">
+            <label>Pesticide Cost ($)</label
+            ><input
+              type="number"
+              id="farmPesticide"
+              placeholder="$"
+              value="0"
+            />
+          </div>
+          <div class="input-group" style="justify-content: flex-end">
+            <button class="primary" id="addFarmBtn">
+              <i class="fas fa-save"></i> Log
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="card-panel">
+        <h2><i class="fas fa-list"></i> Farm log</h2>
+        <div id="farmList"></div>
+      </div>
+      <div class="card-panel">
+        <h2><i class="fas fa-chart-line"></i> Profit/Loss by Crop</h2>
+        <div id="farmProfitList"></div>
+      </div>
+    </div>
 
-  function calculateYieldPerSqm(farm) {
-    if (!farm.size || farm.size <= 0) return 0;
-    return (farm.harvest || 0) / farm.size;
-  }
+    <!-- Daily -->
+    <div id="page-daily" class="page">
+      <div class="row-2col">
+        <div class="card-panel">
+          <h2><i class="fas fa-smile"></i> Mood Tracker</h2>
+          <div class="flex-row" style="gap: 0.5rem">
+            <button class="mood-btn" data-mood="😊" title="Great">😊</button>
+            <button class="mood-btn" data-mood="🙂" title="Good">🙂</button>
+            <button class="mood-btn" data-mood="😐" title="Okay">😐</button>
+            <button class="mood-btn" data-mood="😔" title="Low">😔</button>
+            <button class="mood-btn" data-mood="😢" title="Bad">😢</button>
+          </div>
+          <div style="margin-top: 1rem">
+            <strong>Today:</strong> <span id="todayMood">Not logged</span>
+          </div>
+          <div id="moodHistory" style="margin-top: 1rem"></div>
+        </div>
+        <div class="card-panel">
+          <h2><i class="fas fa-tint"></i> Water Intake</h2>
+          <div class="water-track">
+            <button class="outline" id="waterMinus">−</button>
+            <span class="count" id="waterCount">0</span>
+            <span>glasses</span>
+            <button class="outline" id="waterPlus">+</button>
+          </div>
+          <div
+            style="
+              margin-top: 0.5rem;
+              font-size: 0.85rem;
+              color: var(--text-muted);
+            "
+          >
+            Target: 8 glasses/day
+          </div>
+        </div>
+      </div>
+      <div class="card-panel">
+        <h2><i class="fas fa-utensils"></i> Meals</h2>
+        <div class="flex-row" style="margin-bottom: 1rem">
+          <select id="mealType">
+            <option value="breakfast">Breakfast</option>
+            <option value="lunch">Lunch</option>
+            <option value="dinner">Dinner</option>
+            <option value="snack">Snack</option>
+          </select>
+          <input
+            type="text"
+            id="mealDesc"
+            placeholder="What did you eat?"
+            style="flex: 1"
+          />
+          <button class="primary" id="addMealBtn">Add</button>
+        </div>
+        <div id="mealList"></div>
+      </div>
+      <div class="card-panel">
+        <h2><i class="fas fa-pen"></i> Today's Routine</h2>
+        <div class="flex-row">
+          <input
+            type="number"
+            id="dailySleep"
+            placeholder="Sleep (h)"
+            value="7.5"
+          />
+          <input
+            type="number"
+            id="dailyWork"
+            placeholder="Work (h)"
+            value="6"
+          />
+          <input
+            type="number"
+            id="dailyPrayer"
+            placeholder="Prayer (min)"
+            value="30"
+          />
+          <input
+            type="number"
+            id="dailyExercise"
+            placeholder="Exercise (min)"
+            value="45"
+          />
+          <input
+            type="number"
+            id="dailyStudy"
+            placeholder="Study (min)"
+            value="60"
+          />
+          <button class="primary" id="addDailyBtn">
+            <i class="fas fa-check"></i> Log
+          </button>
+        </div>
+        <div style="margin-top: 1rem" id="dailyList"></div>
+      </div>
+      <div class="card-panel">
+        <h2><i class="fas fa-book"></i> Daily Journal</h2>
+        <textarea
+          id="journalInput"
+          class="journal-textarea"
+          placeholder="Write your thoughts for today..."
+          style="
+            width: 100%;
+            min-height: 80px;
+            resize: vertical;
+            border-radius: 16px;
+            padding: 0.8rem;
+          "
+        ></textarea>
+        <button class="primary" id="addJournalBtn" style="margin-top: 0.5rem">
+          Save Entry
+        </button>
+        <div id="journalList" style="margin-top: 1rem"></div>
+      </div>
+      <div class="card-panel">
+        <h2><i class="fas fa-habit"></i> Habits</h2>
+        <div class="flex-row">
+          <input type="text" id="habitInput" placeholder="New habit" /><button
+            class="primary"
+            id="addHabitBtn"
+          >
+            +
+          </button>
+        </div>
+        <div id="habitList" style="margin-top: 1rem"></div>
+      </div>
+    </div>
 
-  function getTodayKey() { return new Date().toISOString().split('T')[0]; }
+    <!-- Money -->
+    <div id="page-money" class="page">
+      <div class="row-2col">
+        <div class="card-panel">
+          <h2><i class="fas fa-coins"></i> Balance & Transactions</h2>
+          <div class="flex-row">
+            <select id="moneyCurrency" class="currency-select">
+              <option value="$">USD ($)</option>
+              <option value="€">EUR (€)</option>
+              <option value="£">GBP (£)</option>
+              <option value="¥">JPY (¥)</option>
+              <option value="₹">INR (₹)</option>
+            </select>
+          </div>
+          <div style="margin-top: 1rem">
+            <strong>Balance: </strong><span id="balanceDisplay">$0</span>
+          </div>
+        </div>
+        <div class="card-panel">
+          <h2><i class="fas fa-piggy-bank"></i> Quick Add</h2>
+          <div class="flex-row">
+            <input
+              type="number"
+              id="moneySalary"
+              placeholder="Salary"
+              value="2500"
+            />
+            <input
+              type="number"
+              id="moneyIncome"
+              placeholder="Extra income"
+              value="300"
+            />
+            <input
+              type="number"
+              id="moneyExpense"
+              placeholder="Expense"
+              value="150"
+            />
+            <button class="primary" id="addMoneyBtn">
+              <i class="fas fa-calculator"></i> Update
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="row-2col">
+        <div class="card-panel">
+          <h2><i class="fas fa-chart-pie"></i> Spending by Category</h2>
+          <div class="spending-chart" id="spendingChart"></div>
+          <div
+            id="spendingLegend"
+            style="
+              margin-top: 0.5rem;
+              display: flex;
+              flex-wrap: wrap;
+              gap: 0.3rem;
+            "
+          ></div>
+        </div>
+        <div class="card-panel">
+          <h2><i class="fas fa-piggy-bank"></i> Savings Goals</h2>
+          <div class="flex-row" style="margin-bottom: 1rem">
+            <input
+              type="text"
+              id="savingsName"
+              placeholder="Goal name"
+              style="flex: 1"
+            />
+            <input type="number" id="savingsTarget" placeholder="Target" />
+            <input type="number" id="savingsCurrent" placeholder="Current" />
+            <button class="primary" id="addSavingsBtn">Add</button>
+          </div>
+          <div id="savingsList"></div>
+        </div>
+      </div>
+      <div class="row-2col">
+        <div class="card-panel">
+          <h2><i class="fas fa-history"></i> Recent Transactions</h2>
+          <div id="moneyList"></div>
+        </div>
+        <div class="card-panel">
+          <h2><i class="fas fa-redo"></i> Recurring Expenses</h2>
+          <div class="flex-row" style="margin-bottom: 1rem">
+            <input
+              type="text"
+              id="recurringName"
+              placeholder="Expense name"
+              style="flex: 1"
+            />
+            <input type="number" id="recurringAmount" placeholder="Amount" />
+            <select id="recurringFreq">
+              <option value="weekly">Weekly</option>
+              <option value="monthly" selected>Monthly</option>
+              <option value="yearly">Yearly</option>
+            </select>
+            <button class="primary" id="addRecurringBtn">Add</button>
+          </div>
+          <div id="recurringList"></div>
+        </div>
+      </div>
+      <div class="card-panel">
+        <h2><i class="fas fa-layer-group"></i> Budget Categories</h2>
+        <div class="flex-row">
+          <select id="expenseCategory">
+            <option value="food">Food</option>
+            <option value="transport">Transport</option>
+            <option value="utilities">Utilities</option>
+            <option value="entertainment">Entertainment</option>
+            <option value="healthcare">Healthcare</option>
+            <option value="other">Other</option>
+          </select>
+          <input type="number" id="expenseAmount" placeholder="Amount" />
+          <input type="text" id="expenseDesc" placeholder="Description" />
+          <button class="primary" id="addExpenseBtn">Add Expense</button>
+        </div>
+        <div id="expenseByCategory"></div>
+      </div>
+    </div>
 
-  function getHabitStreak(habitName) {
-    const key = 'streak_' + habitName;
-    const lastDate = data.habitStreaks[habitName]?.lastDate;
-    const streak = data.habitStreaks[habitName]?.streak || 0;
-    const today = getTodayKey();
-    if (lastDate === today) return streak;
-    if (lastDate === getYesterday(today)) return streak;
-    return 0;
-  }
+    <!-- Goals -->
+    <div id="page-goals" class="page">
+      <div class="card-panel">
+        <h2><i class="fas fa-flag"></i> Add New Goal</h2>
+        <div class="flex-row" style="margin-bottom: 1rem">
+          <div class="input-group">
+            <label>Goal Title</label
+            ><input
+              type="text"
+              id="goalTitle"
+              placeholder="Goal"
+              value="Harvest 500kg"
+            />
+          </div>
+          <div class="input-group">
+            <label>Category</label
+            ><select id="goalCategory">
+              <option value="personal">Personal</option>
+              <option value="work">Work</option>
+              <option value="health">Health</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label>Priority</label
+            ><select id="goalPriority">
+              <option value="high">High</option>
+              <option value="medium" selected>Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex-row" style="margin-bottom: 1rem">
+          <div class="input-group">
+            <label>Period</label
+            ><select id="goalPeriod">
+              <option value="daily">Daily</option>
+              <option value="monthly" selected>Monthly</option>
+              <option value="yearly">Yearly</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label>Target</label
+            ><input
+              type="number"
+              id="goalTarget"
+              placeholder="Target"
+              value="500"
+            />
+          </div>
+          <div class="input-group">
+            <label>Current Progress</label
+            ><input
+              type="number"
+              id="goalCurrent"
+              placeholder="Current"
+              value="0"
+            />
+          </div>
+          <div class="input-group">
+            <label>Deadline</label><input type="date" id="goalDeadline" />
+          </div>
+        </div>
+        <div class="flex-row">
+          <div class="input-group" style="flex: 1">
+            <label>Subtasks (comma separated)</label
+            ><input
+              type="text"
+              id="goalSubtasks"
+              placeholder="Task 1, Task 2, Task 3"
+            />
+          </div>
+          <div class="input-group" style="justify-content: flex-end">
+            <button class="primary" id="addGoalBtn">
+              <i class="fas fa-plus"></i> Add Goal
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="card-panel">
+        <h2><i class="fas fa-tasks"></i> Your Goals</h2>
+        <div class="flex-row" style="margin-bottom: 1rem">
+          <select id="filterGoalCategory">
+            <option value="all">All Categories</option>
+            <option value="personal">Personal</option>
+            <option value="work">Work</option>
+            <option value="health">Health</option>
+          </select>
+          <select id="filterGoalPriority">
+            <option value="all">All Priorities</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
+        <div id="goalList"></div>
+      </div>
+      <div class="card-panel">
+        <h2><i class="fas fa-clock"></i> Upcoming Deadlines</h2>
+        <div id="goalDeadlines"></div>
+      </div>
+    </div>
 
-  function getYesterday(dateStr) {
-    const d = new Date(dateStr);
-    d.setDate(d.getDate() - 1);
-    return d.toISOString().split('T')[0];
-  }
+    <!-- Reports -->
+    <div id="page-reports" class="page">
+      <div class="analytics-grid">
+        <div class="analytics-card">
+          <div class="label">Total Harvest</div>
+          <div class="value" id="anaHarvest">0 kg</div>
+        </div>
+        <div class="analytics-card green">
+          <div class="label">Farm Profit</div>
+          <div class="value" id="anaProfit">$0</div>
+        </div>
+        <div class="analytics-card orange">
+          <div class="label">Goals Done</div>
+          <div class="value" id="anaGoals">0</div>
+        </div>
+        <div class="analytics-card blue">
+          <div class="label">Balance</div>
+          <div class="value" id="anaBalance">$0</div>
+        </div>
+      </div>
+      <div class="report-grid">
+        <div class="report-card">
+          <h3><i class="fas fa-chart-line"></i> Farm Revenue Trend</h3>
+          <div class="chart-container">
+            <canvas id="farmTrendChart"></canvas>
+          </div>
+        </div>
+        <div class="report-card">
+          <h3><i class="fas fa-chart-pie"></i> Expense Breakdown</h3>
+          <div class="chart-container"><canvas id="expenseChart"></canvas></div>
+        </div>
+      </div>
+      <div class="report-grid">
+        <div class="report-card">
+          <h3><i class="fas fa-chart-bar"></i> Daily Moods</h3>
+          <div class="chart-container"><canvas id="moodChart"></canvas></div>
+        </div>
+        <div class="report-card">
+          <h3><i class="fas fa-tint"></i> Water Intake Trend</h3>
+          <div class="chart-container"><canvas id="waterChart"></canvas></div>
+        </div>
+      </div>
+      <div class="card-panel">
+        <h2>
+          <i class="fas fa-balance-scale"></i> Weekly vs Monthly Comparison
+        </h2>
+        <div id="comparisonTable"></div>
+      </div>
+      <div class="card-panel">
+        <h2><i class="fas fa-file-export"></i> Export & Share</h2>
+        <div class="export-btns">
+          <button class="primary" id="exportPdfBtn">
+            <i class="fas fa-file-pdf"></i> Export PDF
+          </button>
+          <button class="primary" id="emailReportBtn">
+            <i class="fas fa-envelope"></i> Email Report
+          </button>
+          <button class="primary" id="reportDailyBtn">
+            <i class="fas fa-calendar-day"></i> Daily Summary
+          </button>
+          <button class="primary" id="reportWeeklyBtn">
+            <i class="fas fa-calendar-week"></i> Weekly Summary
+          </button>
+          <button class="primary" id="reportMonthlyBtn">
+            <i class="fas fa-calendar-alt"></i> Monthly Summary
+          </button>
+        </div>
+        <div
+          id="reportContent"
+          style="
+            margin-top: 1.2rem;
+            background: var(--bg-main);
+            padding: 1rem;
+            border-radius: 24px;
+          "
+        ></div>
+      </div>
+    </div>
 
-  function updateHabitStreak(habitName) {
-    const today = getTodayKey();
-    const lastDate = data.habitStreaks[habitName]?.lastDate;
-    const currentStreak = data.habitStreaks[habitName]?.streak || 0;
-    if (lastDate === today) return currentStreak;
-    const newStreak = lastDate === getYesterday(today) ? currentStreak + 1 : 1;
-    data.habitStreaks[habitName] = { streak: newStreak, lastDate: today };
-    return newStreak;
-  }
+    <!-- Profile -->
+    <div id="page-profile" class="page">
+      <div class="card-panel">
+        <h2><i class="fas fa-user-circle"></i> Profile & Notes</h2>
+        <div class="flex-row">
+          <input
+            type="text"
+            id="profileName"
+            placeholder="Your name"
+            value="Farmer Joe"
+          />
+        </div>
+        <div style="margin: 1rem 0">
+          <h3><i class="fas fa-image"></i> Photos Evidence</h3>
+          <div class="photo-grid" id="photoGrid"></div>
+          <input type="file" id="photoUpload" accept="image/*" multiple />
+        </div>
+      </div>
+      <div class="card-panel">
+        <h2><i class="fas fa-camera"></i> Camera & Media</h2>
+        <div class="media-tabs">
+          <button class="active" data-media="camera">Camera</button>
+          <button data-media="voice">Voice Notes</button>
+          <button data-media="gallery">Gallery</button>
+          <button data-media="docs">Documents</button>
+        </div>
+        <div id="mediaCamera" class="media-panel">
+          <button class="primary" id="openCameraBtn">
+            <i class="fas fa-camera"></i> Open Camera
+          </button>
+          <video
+            id="cameraPreview"
+            class="camera-preview"
+            autoplay
+            playsinline
+            style="display: none"
+          ></video>
+          <canvas id="cameraCanvas" style="display: none"></canvas>
+          <button
+            class="primary"
+            id="takePhotoBtn"
+            style="display: none; margin-top: 0.5rem"
+          >
+            <i class="fas fa-camera"></i> Capture
+          </button>
+          <div class="photo-grid" id="cameraPhotos"></div>
+        </div>
+        <div id="mediaVoice" class="media-panel" style="display: none">
+          <div class="voice-recorder">
+            <button class="voice-btn" id="recordBtn">
+              <i class="fas fa-microphone"></i>
+            </button>
+            <div class="voice-waveform" id="voiceStatus">Press to record</div>
+            <button class="outline" id="stopRecordBtn" style="display: none">
+              Stop
+            </button>
+          </div>
+          <div id="voiceList" style="margin-top: 1rem"></div>
+        </div>
+        <div id="mediaGallery" class="media-panel" style="display: none">
+          <div class="photo-grid" id="galleryGrid"></div>
+        </div>
+        <div id="mediaDocs" class="media-panel" style="display: none">
+          <div class="flex-row">
+            <input type="file" id="docUpload" accept="image/*" /><button
+              class="primary"
+              id="scanDocBtn"
+            >
+              Scan Document
+            </button>
+          </div>
+          <div
+            class="doc-grid"
+            id="docGrid"
+            style="
+              display: grid;
+              grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+              gap: 0.5rem;
+              margin-top: 0.5rem;
+            "
+          ></div>
+        </div>
+      </div>
+      <div class="card-panel">
+        <h2><i class="fas fa-sticky-note"></i> Notes</h2>
+        <textarea
+          id="noteInput"
+          rows="2"
+          placeholder="Write a note..."
+          style="
+            width: 100%;
+            border-radius: 20px;
+            padding: 0.8rem;
+            background: var(--bg-main);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+          "
+        ></textarea>
+        <button class="primary" id="addNoteBtn" style="margin-top: 8px">
+          Save note
+        </button>
+        <div id="noteList" style="margin-top: 1rem"></div>
+      </div>
+    </div>
 
-  function renderDashboard() {
-    const farmTotal = data.farm.reduce((s, f) => s + (f.harvest || 0), 0);
-    const totalProfit = data.farm.reduce((s, f) => s + calculateProfit(f), 0);
-    const goalDone = data.goals.filter(g => g.done).length;
-    const totalGoals = data.goals.length || 1;
-    const balance = getBalance();
-    document.getElementById('dashStats').innerHTML = `
-      <div class="stat-card"><i class="fas fa-seedling"></i><div><h4>Harvest</h4><div class="value">${farmTotal} kg</div></div></div>
-      <div class="stat-card"><i class="fas fa-wallet"></i><div><h4>Balance</h4><div class="value">$${balance}</div></div></div>
-      <div class="stat-card"><i class="fas fa-bullseye"></i><div><h4>Goals done</h4><div class="value">${goalDone}/${totalGoals}</div></div></div>
-      <div class="stat-card"><i class="fas fa-chart-line"></i><div><h4>Farm Profit</h4><div class="value ${totalProfit >= 0 ? 'profit' : 'loss'}">$${totalProfit.toFixed(0)}</div></div></div>`;
-    const recent = [...data.farm].slice(-3).reverse();
-    document.getElementById('dashFarm').innerHTML = recent.length ? recent.map(f => `<div class="list-item category-${f.category || 'other'}"><span><strong>${f.crop}</strong> <span class="crop-category ${f.category || 'other'}">${f.category || 'other'}</span> · ${f.field} · ${f.harvest}kg</span> <span>${calculateProfit(f) >= 0 ? '+' : ''}$${calculateProfit(f).toFixed(0)}</span></div>`).join('') : '<div class="small-note">No farm entries</div>';
-    const goals = data.goals.slice(0, 4);
-    document.getElementById('dashGoals').innerHTML = goals.length ? goals.map(g => `<div class="list-item">${g.title} ${g.done ? '✅' : '⏳'} (${g.period})</div>`).join('') : '<div class="small-note">No goals yet</div>';
-    const rems = data.reminders.slice(-3).reverse();
-    document.getElementById('dashReminders').innerHTML = rems.length ? rems.map(r => `<div class="list-item"><span>${r.text}</span> <span class="badge">${r.date || 'today'}</span></div>`).join('') : '<div class="small-note">No reminders</div>';
-  }
+    <script>
+      // ============================================================
+      // FARMING & LIFE TRACKER - Complete JavaScript
+      // ============================================================
 
-  function renderFarm() {
-    const totalCost = data.farm.reduce((s, f) => s + (f.cost || 0) + (f.fertilizer || 0) + (f.pesticide || 0), 0);
-    const totalRevenue = data.farm.reduce((s, f) => s + (f.harvest || 0) * (f.price || 0), 0);
-    const totalProfit = data.farm.reduce((s, f) => s + calculateProfit(f), 0);
-    const avgYield = data.farm.length ? data.farm.reduce((s, f) => s + calculateYieldPerSqm(f), 0) / data.farm.length : 0;
+      console.log("🌾 Farming & Life Tracker starting...");
 
-    document.getElementById('farmStats').innerHTML = `
-      <div class="farm-stat"><div class="label">Total Cost</div><div class="val">$${totalCost.toFixed(0)}</div></div>
-      <div class="farm-stat"><div class="label">Total Revenue</div><div class="val">$${totalRevenue.toFixed(0)}</div></div>
-      <div class="farm-stat"><div class="label">Total Profit</div><div class="val ${totalProfit >= 0 ? 'profit' : 'loss'}">$${totalProfit.toFixed(0)}</div></div>
-      <div class="farm-stat"><div class="label">Avg Yield/m²</div><div class="val">${avgYield.toFixed(2)} kg</div></div>
-    `;
+      // Data store
+      let data = {
+        farm: [],
+        daily: [],
+        habits: [],
+        money: [],
+        goals: [],
+        reminders: [],
+        notes: [],
+        photos: [],
+        profileName: "Farmer Joe",
+        moods: [],
+        meals: [],
+        journals: [],
+        habitStreaks: {},
+        water: [],
+        savingsGoals: [],
+        recurringExpenses: [],
+        expenses: [],
+        currency: "$",
+        voiceNotes: [],
+        documents: [],
+        notifSettings: {
+          daily: true,
+          goals: true,
+          habits: true,
+          browser: false,
+        },
+      };
 
-    const list = document.getElementById('farmList');
-    list.innerHTML = data.farm.length ? data.farm.map((f, i) => {
-      const profit = calculateProfit(f);
-      const yieldPerSqm = calculateYieldPerSqm(f);
-      return `<div class="list-item category-${f.category || 'other'}">
+      // Helper functions
+      function getCurrency() {
+        return data.currency || "$";
+      }
+      function formatMoney(amount) {
+        return getCurrency() + Number(amount).toFixed(0);
+      }
+
+      function getTodayKey() {
+        return new Date().toISOString().split("T")[0];
+      }
+
+      function getYesterday(dateStr) {
+        const d = new Date(dateStr);
+        d.setDate(d.getDate() - 1);
+        return d.toISOString().split("T")[0];
+      }
+
+      function loadData() {
+        try {
+          const raw = localStorage.getItem("farmLifeData");
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            for (let key in parsed) {
+              if (data.hasOwnProperty(key)) data[key] = parsed[key];
+            }
+          }
+        } catch (e) {
+          console.warn("Load error:", e);
+        }
+      }
+
+      function saveData() {
+        localStorage.setItem("farmLifeData", JSON.stringify(data));
+        renderAll();
+      }
+
+      function getBalance() {
+        let bal = 0;
+        data.money.forEach((t) => {
+          if (t.type === "salary" || t.type === "income") bal += t.amount;
+          else if (t.type === "expense") bal -= t.amount;
+        });
+        return bal;
+      }
+
+      function calculateProfit(farm) {
+        const revenue = (farm.harvest || 0) * (farm.price || 0);
+        const totalCost =
+          (farm.cost || 0) + (farm.fertilizer || 0) + (farm.pesticide || 0);
+        return revenue - totalCost;
+      }
+
+      function calculateYieldPerSqm(farm) {
+        if (!farm.size || farm.size <= 0) return 0;
+        return (farm.harvest || 0) / farm.size;
+      }
+
+      function getHabitStreak(habitName) {
+        const streakData = data.habitStreaks[habitName];
+        if (!streakData) return 0;
+        const lastDate = streakData.lastDate;
+        const streak = streakData.streak || 0;
+        const today = getTodayKey();
+        if (lastDate === today) return streak;
+        if (lastDate === getYesterday(today)) return streak;
+        return 0;
+      }
+
+      function updateHabitStreak(habitName) {
+        const today = getTodayKey();
+        const streakData = data.habitStreaks[habitName] || {
+          streak: 0,
+          lastDate: null,
+        };
+        const lastDate = streakData.lastDate;
+        const currentStreak = streakData.streak || 0;
+
+        if (lastDate === today) return currentStreak;
+
+        let newStreak;
+        if (lastDate === getYesterday(today)) {
+          newStreak = currentStreak + 1;
+        } else {
+          newStreak = 1;
+        }
+
+        data.habitStreaks[habitName] = { streak: newStreak, lastDate: today };
+        return newStreak;
+      }
+
+      function getDeadlineClass(deadline) {
+        if (!deadline) return "";
+        const today = new Date().toISOString().split("T")[0];
+        const d = new Date(deadline);
+        const t = new Date(today);
+        const diff = (d - t) / (1000 * 60 * 60 * 24);
+        if (diff < 0) return "overdue";
+        if (diff <= 3) return "soon";
+        return "ok";
+      }
+
+      function showToast(message, type = "info") {
+        const container = document.getElementById("notificationPanel");
+        if (!container) return;
+
+        const toast = document.createElement("div");
+        toast.className = `toast ${type}`;
+        const icons = {
+          success: "check",
+          warning: "exclamation",
+          error: "times",
+          info: "info",
+        };
+        toast.innerHTML = `<i class="fas fa-${icons[type] || "info"}-circle"></i> ${message}`;
+        container.insertBefore(toast, container.firstChild);
+
+        setTimeout(() => {
+          if (toast.parentNode) toast.remove();
+        }, 4000);
+      }
+
+      function sendBrowserNotification(title, body) {
+        if (Notification.permission === "granted") {
+          new Notification(title, {
+            body: body,
+            icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🌾</text></svg>',
+          });
+        }
+      }
+
+      // ============================================================
+      // RENDER FUNCTIONS
+      // ============================================================
+
+      function renderDashboard() {
+        const farmTotal = data.farm.reduce((s, f) => s + (f.harvest || 0), 0);
+        const totalProfit = data.farm.reduce(
+          (s, f) => s + calculateProfit(f),
+          0,
+        );
+        const goalDone = data.goals.filter((g) => g.done).length;
+        const totalGoals = data.goals.length || 1;
+        const balance = getBalance();
+        const currency = getCurrency();
+
+        document.getElementById("dashStats").innerHTML = `
+    <div class="stat-card"><i class="fas fa-seedling"></i><div><h4>Harvest</h4><div class="value">${farmTotal} kg</div></div></div>
+    <div class="stat-card"><i class="fas fa-wallet"></i><div><h4>Balance</h4><div class="value">${currency}${balance}</div></div></div>
+    <div class="stat-card"><i class="fas fa-bullseye"></i><div><h4>Goals done</h4><div class="value">${goalDone}/${totalGoals}</div></div></div>
+    <div class="stat-card"><i class="fas fa-chart-line"></i><div><h4>Farm Profit</h4><div class="value ${totalProfit >= 0 ? "profit" : "loss"}">${currency}${totalProfit.toFixed(0)}</div></div></div>
+  `;
+
+        const recent = [...data.farm].slice(-3).reverse();
+        document.getElementById("dashFarm").innerHTML = recent.length
+          ? recent
+              .map(
+                (f) =>
+                  `<div class="list-item"><span><strong>${f.crop}</strong> · ${f.field} · ${f.harvest}kg</span> <span>${calculateProfit(f) >= 0 ? "+" : ""}${currency}${calculateProfit(f).toFixed(0)}</span></div>`,
+              )
+              .join("")
+          : '<div class="small-note">No farm entries</div>';
+
+        const goals = data.goals.slice(0, 4);
+        document.getElementById("dashGoals").innerHTML = goals.length
+          ? goals
+              .map(
+                (g) =>
+                  `<div class="list-item">${g.title} ${g.done ? "✅" : "⏳"} (${g.period})</div>`,
+              )
+              .join("")
+          : '<div class="small-note">No goals yet</div>';
+
+        const rems = data.reminders.slice(-3).reverse();
+        document.getElementById("dashReminders").innerHTML = rems.length
+          ? rems
+              .map(
+                (r) =>
+                  `<div class="list-item"><span>${r.text}</span> <span class="badge">${r.date || "today"}</span></div>`,
+              )
+              .join("")
+          : '<div class="small-note">No reminders</div>';
+      }
+
+      function renderFarm() {
+        const totalCost = data.farm.reduce(
+          (s, f) =>
+            s + (f.cost || 0) + (f.fertilizer || 0) + (f.pesticide || 0),
+          0,
+        );
+        const totalRevenue = data.farm.reduce(
+          (s, f) => s + (f.harvest || 0) * (f.price || 0),
+          0,
+        );
+        const totalProfit = data.farm.reduce(
+          (s, f) => s + calculateProfit(f),
+          0,
+        );
+        const avgYield = data.farm.length
+          ? data.farm.reduce((s, f) => s + calculateYieldPerSqm(f), 0) /
+            data.farm.length
+          : 0;
+        const currency = getCurrency();
+
+        document.getElementById("farmStats").innerHTML = `
+    <div class="farm-stat"><div class="label">Total Cost</div><div class="val">${currency}${totalCost.toFixed(0)}</div></div>
+    <div class="farm-stat"><div class="label">Total Revenue</div><div class="val">${currency}${totalRevenue.toFixed(0)}</div></div>
+    <div class="farm-stat"><div class="label">Total Profit</div><div class="val ${totalProfit >= 0 ? "profit" : "loss"}">${currency}${totalProfit.toFixed(0)}</div></div>
+    <div class="farm-stat"><div class="label">Avg Yield/m²</div><div class="val">${avgYield.toFixed(2)} kg</div></div>
+  `;
+
+        const list = document.getElementById("farmList");
+        list.innerHTML = data.farm.length
+          ? data.farm
+              .map((f, i) => {
+                const profit = calculateProfit(f);
+                return `<div class="list-item">
         <div>
-          <strong>${f.crop}</strong> <span class="crop-category ${f.category || 'other'}">${f.category || 'other'}</span><br>
-          <span class="small-note">${f.field} · ${f.size || '?'}m² · ${f.season || 'N/A'} · ${f.plantDate || 'No date'}</span><br>
-          <span class="small-note">Yield: ${yieldPerSqm.toFixed(2)} kg/m² · Fertilizer: $${f.fertilizer || 0} · Pesticide: $${f.pesticide || 0}</span>
+          <strong>${f.crop}</strong> <span class="crop-category ${f.category || "other"}">${f.category || "other"}</span>
+          <div class="small-note">${f.field} · ${f.size || "?"}m² · ${f.season || "N/A"}</div>
         </div>
         <div style="text-align:right;">
           <div>Harvest: ${f.harvest || 0}kg</div>
-          <div class="${profit >= 0 ? 'profit' : 'loss'}">${profit >= 0 ? '+' : ''}$${profit.toFixed(0)}</div>
+          <div class="${profit >= 0 ? "profit" : "loss"}">${profit >= 0 ? "+" : ""}${currency}${profit.toFixed(0)}</div>
           <button class="outline" onclick="deleteFarm(${i})"><i class="fas fa-trash"></i></button>
         </div>
       </div>`;
-    }).join('') : '<div class="small-note">No farm entries</div>';
+              })
+              .join("")
+          : '<div class="small-note">No farm entries</div>';
 
-    const cropProfits = {};
-    data.farm.forEach(f => {
-      const name = f.crop || 'Unknown';
-      if (!cropProfits[name]) cropProfits[name] = { profit: 0, harvest: 0, cost: 0 };
-      cropProfits[name].profit += calculateProfit(f);
-      cropProfits[name].harvest += f.harvest || 0;
-      cropProfits[name].cost += (f.cost || 0) + (f.fertilizer || 0) + (f.pesticide || 0);
-    });
+        // Profit by crop
+        const cropProfits = {};
+        data.farm.forEach((f) => {
+          const name = f.crop || "Unknown";
+          if (!cropProfits[name])
+            cropProfits[name] = { profit: 0, harvest: 0, cost: 0 };
+          cropProfits[name].profit += calculateProfit(f);
+          cropProfits[name].harvest += f.harvest || 0;
+          cropProfits[name].cost +=
+            (f.cost || 0) + (f.fertilizer || 0) + (f.pesticide || 0);
+        });
 
-    const profitList = document.getElementById('farmProfitList');
-    const sortedCrops = Object.entries(cropProfits).sort((a, b) => b[1].profit - a[1].profit);
-    profitList.innerHTML = sortedCrops.length ? sortedCrops.map(([crop, stats]) => `
+        const profitList = document.getElementById("farmProfitList");
+        const sortedCrops = Object.entries(cropProfits).sort(
+          (a, b) => b[1].profit - a[1].profit,
+        );
+        profitList.innerHTML = sortedCrops.length
+          ? sortedCrops
+              .map(
+                ([crop, stats]) => `
       <div class="list-item">
-        <div><strong>${crop}</strong><br><span class="small-note">Harvest: ${stats.harvest}kg · Cost: $${stats.cost}</span></div>
-        <div class="${stats.profit >= 0 ? 'profit' : 'loss'}" style="font-size:1.2rem;">${stats.profit >= 0 ? '+' : ''}$${stats.profit.toFixed(0)}</div>
+        <div><strong>${crop}</strong><div class="small-note">Harvest: ${stats.harvest}kg · Cost: ${currency}${stats.cost}</div></div>
+        <div class="${stats.profit >= 0 ? "profit" : "loss"}" style="font-size:1.2rem;">${stats.profit >= 0 ? "+" : ""}${currency}${stats.profit.toFixed(0)}</div>
       </div>
-    `).join('') : '<div class="small-note">No crop data</div>';
-  }
-  window.deleteFarm = function(idx) { data.farm.splice(idx, 1); saveData(); };
+    `,
+              )
+              .join("")
+          : '<div class="small-note">No crop data</div>';
+      }
 
-  function renderDaily() {
-    const today = getTodayKey();
-    const todayMood = data.moods.find(m => m.date === today);
-    document.getElementById('todayMood').innerText = todayMood ? todayMood.mood : 'Not logged';
-    document.getElementById('moodHistory').innerHTML = data.moods.slice(-5).reverse().map(m => `<div class="list-item"><span>${m.mood}</span> <span class="small-note">${m.date}</span></div>`).join('') || '';
+      window.deleteFarm = function (idx) {
+        data.farm.splice(idx, 1);
+        saveData();
+      };
 
-    const todayWater = data.water.find(w => w.date === today);
-    const waterCount = todayWater?.count || 0;
-    document.getElementById('waterCount').innerText = waterCount;
+      function renderDaily() {
+        const today = getTodayKey();
+        const todayMood = data.moods.find((m) => m.date === today);
+        document.getElementById("todayMood").innerText = todayMood
+          ? todayMood.mood
+          : "Not logged";
 
-    document.getElementById('mealList').innerHTML = data.meals.slice(-10).reverse().map(m => `<div class="list-item"><span><strong>${m.type}</strong>: ${m.desc}</span> <span class="small-note">${m.date}</span></div>`).join('') || '<div class="small-note">No meals logged</div>';
+        document.getElementById("moodHistory").innerHTML =
+          data.moods
+            .slice(-5)
+            .reverse()
+            .map(
+              (m) =>
+                `<div class="list-item"><span>${m.mood}</span> <span class="small-note">${m.date}</span></div>`,
+            )
+            .join("") || "";
 
-    const list = document.getElementById('dailyList');
-    list.innerHTML = data.daily.length ? data.daily.slice(-7).reverse().map((d, i) => `<div class="list-item">Sleep ${d.sleep}h · Work ${d.work}h · Prayer ${d.prayer}min · Exercise ${d.exercise}min · Study ${d.study}min</div>`).join('') : '<div class="small-note">No daily entries</div>';
+        const todayWater = data.water.find((w) => w.date === today);
+        const waterCount = todayWater?.count || 0;
+        document.getElementById("waterCount").innerText = waterCount;
 
-    const hlist = document.getElementById('habitList');
-    hlist.innerHTML = data.habits.length ? data.habits.map((h, i) => {
-      const streak = getHabitStreak(h);
-      return `<div class="list-item"><span>${h}</span> <div><span class="streak-badge">${streak}🔥</span> <button class="outline" onclick="toggleHabit(${i})">Done</button> <button class="outline" onclick="deleteHabit(${i})"><i class="fas fa-times"></i></button></div></div>`;
-    }).join('') : '<div class="small-note">No habits</div>';
+        document.getElementById("mealList").innerHTML =
+          data.meals
+            .slice(-10)
+            .reverse()
+            .map(
+              (m) =>
+                `<div class="list-item"><span><strong>${m.type}</strong>: ${m.desc}</span> <span class="small-note">${m.date}</span></div>`,
+            )
+            .join("") || '<div class="small-note">No meals logged</div>';
 
-    document.getElementById('journalList').innerHTML = data.journals.slice(-5).reverse().map(j => `<div class="list-item journal-entry"><span>${j.text}</span> <span class="small-note">${j.date}</span></div>`).join('') || '';
-  }
-  window.toggleHabit = function(idx) {
-    const habit = data.habits[idx];
-    if (habit) updateHabitStreak(habit);
-    saveData();
-  };
-  window.deleteHabit = function(idx) { data.habits.splice(idx,1); saveData(); };
+        const list = document.getElementById("dailyList");
+        list.innerHTML = data.daily.length
+          ? data.daily
+              .slice(-7)
+              .reverse()
+              .map(
+                (d) =>
+                  `<div class="list-item">Sleep ${d.sleep}h · Work ${d.work}h · Prayer ${d.prayer}min · Exercise ${d.exercise}min · Study ${d.study}min</div>`,
+              )
+              .join("")
+          : '<div class="small-note">No daily entries</div>';
 
-  function renderMoney() {
-    const currency = getCurrency();
-    document.getElementById('balanceDisplay').innerText = currency + getBalance();
-    const list = document.getElementById('moneyList');
-    list.innerHTML = data.money.length ? data.money.slice(-10).reverse().map((m, i) => {
-      const cat = data.expenses.find(e => e.id === m.id)?.category || 'other';
-      return `<div class="list-item"><span>${m.type}: ${currency}${m.amount}</span> <span class="expense-category ${cat}">${cat}</span> <button class="outline" onclick="deleteMoney(${data.money.indexOf(m)})"><i class="fas fa-trash"></i></button></div>`;
-    }).join('') : '<div class="small-note">No transactions</div>';
+        const hlist = document.getElementById("habitList");
+        hlist.innerHTML = data.habits.length
+          ? data.habits
+              .map((h, i) => {
+                const streak = getHabitStreak(h);
+                return `<div class="list-item"><span>${h}</span> <div><span class="streak-badge">${streak}🔥</span> <button class="outline" onclick="toggleHabit(${i})">Done</button> <button class="outline" onclick="deleteHabit(${i})"><i class="fas fa-times"></i></button></div></div>`;
+              })
+              .join("")
+          : '<div class="small-note">No habits</div>';
 
-    const catTotals = {};
-    data.expenses.forEach(e => { catTotals[e.category] = (catTotals[e.category] || 0) + e.amount; });
-    const maxCat = Math.max(...Object.values(catTotals), 1);
-    const chartContainer = document.getElementById('spendingChart');
-    const colors = { food: '#e74c3c', transport: '#3498db', utilities: '#f39c12', entertainment: '#9b59b6', healthcare: '#27ae60', other: '#95a5a6' };
-    chartContainer.innerHTML = Object.entries(catTotals).map(([cat, amount]) => {
-      const height = (amount / maxCat) * 100;
-      return `<div class="spending-bar" style="height:${height}%;background:${colors[cat]}"><span class="tooltip">${cat}: ${currency}${amount}</span></div>`;
-    }).join('') || '<div class="small-note">No expenses yet</div>';
+        document.getElementById("journalList").innerHTML =
+          data.journals
+            .slice(-5)
+            .reverse()
+            .map(
+              (j) =>
+                `<div class="list-item journal-entry"><span>${j.text}</span> <span class="small-note">${j.date}</span></div>`,
+            )
+            .join("") || "";
+      }
 
-    const legend = document.getElementById('spendingLegend');
-    legend.innerHTML = Object.entries(catTotals).map(([cat, amount]) => `<span class="expense-category ${cat}">${cat}: ${currency}${amount}</span>`).join(' ');
+      window.toggleHabit = function (idx) {
+        const habit = data.habits[idx];
+        if (habit) {
+          updateHabitStreak(habit);
+          saveData();
+        }
+      };
 
-    document.getElementById('expenseByCategory').innerHTML = Object.entries(catTotals).length ? Object.entries(catTotals).map(([cat, amount]) => `
+      window.deleteHabit = function (idx) {
+        data.habits.splice(idx, 1);
+        saveData();
+      };
+
+      function renderMoney() {
+        const currency = getCurrency();
+        document.getElementById("balanceDisplay").innerText =
+          currency + getBalance();
+
+        const list = document.getElementById("moneyList");
+        list.innerHTML = data.money.length
+          ? data.money
+              .slice(-10)
+              .reverse()
+              .map((m) => {
+                const cat =
+                  data.expenses.find((e) => e.id === m.id)?.category || "other";
+                return `<div class="list-item"><span>${m.type}: ${currency}${m.amount}</span> <span class="expense-category ${cat}">${cat}</span> <button class="outline" onclick="deleteMoney(${data.money.indexOf(m)})"><i class="fas fa-trash"></i></button></div>`;
+              })
+              .join("")
+          : '<div class="small-note">No transactions</div>';
+
+        // Spending chart
+        const catTotals = {};
+        data.expenses.forEach((e) => {
+          catTotals[e.category] = (catTotals[e.category] || 0) + e.amount;
+        });
+        const maxCat = Math.max(...Object.values(catTotals), 1);
+        const colors = {
+          food: "#e74c3c",
+          transport: "#3498db",
+          utilities: "#f39c12",
+          entertainment: "#9b59b6",
+          healthcare: "#27ae60",
+          other: "#95a5a6",
+        };
+
+        const chartContainer = document.getElementById("spendingChart");
+        chartContainer.innerHTML =
+          Object.entries(catTotals)
+            .map(([cat, amount]) => {
+              const height = (amount / maxCat) * 100;
+              return `<div class="spending-bar" style="height:${Math.max(height, 5)}%;background:${colors[cat] || "#95a5a6"}"><span class="tooltip">${cat}: ${currency}${amount}</span></div>`;
+            })
+            .join("") || '<div class="small-note">No expenses yet</div>';
+
+        const legend = document.getElementById("spendingLegend");
+        legend.innerHTML = Object.entries(catTotals)
+          .map(
+            ([cat, amount]) =>
+              `<span class="expense-category ${cat}">${cat}: ${currency}${amount}</span>`,
+          )
+          .join(" ");
+
+        document.getElementById("expenseByCategory").innerHTML = Object.entries(
+          catTotals,
+        ).length
+          ? Object.entries(catTotals)
+              .map(
+                ([cat, amount]) => `
       <div class="list-item"><span class="expense-category ${cat}">${cat}</span> <span>${currency}${amount}</span></div>
-    `).join('') : '<div class="small-note">No expenses by category</div>';
+    `,
+              )
+              .join("")
+          : '<div class="small-note">No expenses by category</div>';
 
-    document.getElementById('savingsList').innerHTML = data.savingsGoals.length ? data.savingsGoals.map((s, i) => {
-      const pct = Math.min((s.current / s.target) * 100, 100);
-      return `<div class="list-item"><div style="flex:1"><strong>${s.name}</strong> <span class="small-note">${currency}${s.current} / ${currency}${s.target}</span><div class="savings-progress"><div class="savings-progress-bar" style="width:${pct}%"></div></div></div> <button class="outline" onclick="deleteSavings(${i})"><i class="fas fa-trash"></i></button></div>`;
-    }).join('') : '<div class="small-note">No savings goals</div>';
+        // Savings goals
+        document.getElementById("savingsList").innerHTML = data.savingsGoals
+          .length
+          ? data.savingsGoals
+              .map((s, i) => {
+                const pct = Math.min((s.current / s.target) * 100, 100);
+                return `<div class="list-item"><div style="flex:1"><strong>${s.name}</strong> <span class="small-note">${currency}${s.current} / ${currency}${s.target}</span><div class="savings-progress"><div class="savings-progress-bar" style="width:${pct}%"></div></div></div> <button class="outline" onclick="deleteSavings(${i})"><i class="fas fa-trash"></i></button></div>`;
+              })
+              .join("")
+          : '<div class="small-note">No savings goals</div>';
 
-    document.getElementById('recurringList').innerHTML = data.recurringExpenses.length ? data.recurringExpenses.map((r, i) => `
-      <div class="list-item"><span><strong>${r.name}</strong> <span class="recurring-badge">${r.freq}</span></span> <span>${currency}${r.amount}/mo</span> <button class="outline" onclick="deleteRecurring(${i})"><i class="fas fa-trash"></i></button></div>
-    `).join('') : '<div class="small-note">No recurring expenses</div>';
-  }
-  window.deleteMoney = function(idx) { data.money.splice(idx,1); saveData(); };
-  window.deleteSavings = function(idx) { data.savingsGoals.splice(idx,1); saveData(); };
-  window.deleteRecurring = function(idx) { data.recurringExpenses.splice(idx,1); saveData(); };
+        // Recurring expenses
+        document.getElementById("recurringList").innerHTML = data
+          .recurringExpenses.length
+          ? data.recurringExpenses
+              .map(
+                (r, i) => `
+      <div class="list-item"><span><strong>${r.name}</strong> <span class="recurring-badge" style="background:#3498db;color:white;padding:0.2rem 0.6rem;border-radius:10px;font-size:0.65rem;margin-left:0.5rem;">${r.freq}</span></span> <span>${currency}${r.amount}/mo</span> <button class="outline" onclick="deleteRecurring(${i})"><i class="fas fa-trash"></i></button></div>
+    `,
+              )
+              .join("")
+          : '<div class="small-note">No recurring expenses</div>';
+      }
 
-  function renderGoals() {
-    const filterCat = document.getElementById('filterGoalCategory')?.value || 'all';
-    const filterPri = document.getElementById('filterGoalPriority')?.value || 'all';
-    let filtered = data.goals;
-    if (filterCat !== 'all') filtered = filtered.filter(g => g.category === filterCat);
-    if (filterPri !== 'all') filtered = filtered.filter(g => g.priority === filterPri);
+      window.deleteMoney = function (idx) {
+        data.money.splice(idx, 1);
+        saveData();
+      };
+      window.deleteSavings = function (idx) {
+        data.savingsGoals.splice(idx, 1);
+        saveData();
+      };
+      window.deleteRecurring = function (idx) {
+        data.recurringExpenses.splice(idx, 1);
+        saveData();
+      };
 
-    const list = document.getElementById('goalList');
-    list.innerHTML = filtered.length ? filtered.map((g, i) => {
-      const realIdx = data.goals.indexOf(g);
-      const pct = g.target > 0 ? Math.min((g.current / g.target) * 100, 100) : 0;
-      const deadlineClass = getDeadlineClass(g.deadline);
-      const subtasks = g.subtasks || [];
-      const completedSubs = subtasks.filter(s => s.done).length;
-      return `<div class="list-item priority-${g.priority || 'medium'}">
+      function renderGoals() {
+        const filterCat =
+          document.getElementById("filterGoalCategory")?.value || "all";
+        const filterPri =
+          document.getElementById("filterGoalPriority")?.value || "all";
+
+        let filtered = data.goals;
+        if (filterCat !== "all")
+          filtered = filtered.filter((g) => g.category === filterCat);
+        if (filterPri !== "all")
+          filtered = filtered.filter((g) => g.priority === filterPri);
+
+        const list = document.getElementById("goalList");
+        list.innerHTML = filtered.length
+          ? filtered
+              .map((g, i) => {
+                const realIdx = data.goals.indexOf(g);
+                const pct =
+                  g.target > 0
+                    ? Math.min((g.current / g.target) * 100, 100)
+                    : 0;
+                const deadlineClass = getDeadlineClass(g.deadline);
+                const subtasks = g.subtasks || [];
+
+                return `<div class="list-item priority-${g.priority || "medium"}">
         <div style="flex:1">
           <div>
             <strong>${g.title}</strong>
-            <span class="priority-badge ${g.priority || 'medium'}">${g.priority || 'medium'}</span>
-            <span class="goal-category ${g.category || 'personal'}">${g.category || 'personal'}</span>
-            ${g.deadline ? `<span class="deadline-badge ${deadlineClass}">${g.deadline}</span>` : ''}
+            <span class="priority-badge ${g.priority || "medium"}">${g.priority || "medium"}</span>
+            <span class="goal-category ${g.category || "personal"}">${g.category || "personal"}</span>
+            ${g.deadline ? `<span class="deadline-badge ${deadlineClass}">${g.deadline}</span>` : ""}
+            ${g.done ? " ✅" : ""}
           </div>
           <div class="small-note">${g.period} · ${g.current || 0} / ${g.target} (${pct.toFixed(0)}%)</div>
           <div class="progress-bar"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
-          ${subtasks.length ? `<div class="subtask-list">${subtasks.map((s, si) => `<div class="subtask-item ${s.done ? 'completed' : ''}"><input type="checkbox" ${s.done ? 'checked' : ''} onchange="toggleSubtask(${realIdx},${si})"> ${s.text}</div>`).join('')}</div>` : ''}
-          <div class="goal-actions">
+          ${subtasks.length ? `<div class="subtask-list">${subtasks.map((s, si) => `<div class="subtask-item ${s.done ? "completed" : ""}"><input type="checkbox" ${s.done ? "checked" : ""} onchange="toggleSubtask(${realIdx},${si})"> ${s.text}</div>`).join("")}</div>` : ""}
+          <div class="goal-actions" style="display:flex;gap:0.5rem;margin-top:0.5rem;">
             <button class="outline" onclick="updateGoalProgress(${realIdx}, 10)">+10%</button>
             <button class="outline" onclick="updateGoalProgress(${realIdx}, 25)">+25%</button>
-            <button class="outline" onclick="toggleGoal(${realIdx})">${g.done ? 'Undo' : 'Done'}</button>
+            <button class="outline" onclick="toggleGoal(${realIdx})">${g.done ? "Undo" : "Done"}</button>
             <button class="outline" onclick="deleteGoal(${realIdx})"><i class="fas fa-trash"></i></button>
           </div>
         </div>
       </div>`;
-    }).join('') : '<div class="small-note">No goals yet</div>';
+              })
+              .join("")
+          : '<div class="small-note">No goals yet</div>';
 
-    const deadlinesDiv = document.getElementById('goalDeadlines');
-    const upcoming = data.goals.filter(g => g.deadline && !g.done).sort((a, b) => new Date(a.deadline) - new Date(b.deadline)).slice(0, 5);
-    deadlinesDiv.innerHTML = upcoming.length ? upcoming.map(g => {
-      const cls = getDeadlineClass(g.deadline);
-      return `<div class="list-item"><span><strong>${g.title}</strong> <span class="goal-category ${g.category}">${g.category}</span></span> <span class="deadline-badge ${cls}">${g.deadline}</span></div>`;
-    }).join('') : '<div class="small-note">No upcoming deadlines</div>';
-  }
+        // Upcoming deadlines
+        const deadlinesDiv = document.getElementById("goalDeadlines");
+        const upcoming = data.goals
+          .filter((g) => g.deadline && !g.done)
+          .sort((a, b) => new Date(a.deadline) - new Date(b.deadline))
+          .slice(0, 5);
+        deadlinesDiv.innerHTML = upcoming.length
+          ? upcoming
+              .map((g) => {
+                const cls = getDeadlineClass(g.deadline);
+                return `<div class="list-item"><span><strong>${g.title}</strong> <span class="goal-category ${g.category}">${g.category}</span></span> <span class="deadline-badge ${cls}">${g.deadline}</span></div>`;
+              })
+              .join("")
+          : '<div class="small-note">No upcoming deadlines</div>';
+      }
 
-  function getDeadlineClass(deadline) {
-    if (!deadline) return '';
-    const today = new Date().toISOString().split('T')[0];
-    const d = new Date(deadline);
-    const t = new Date(today);
-    const diff = (d - t) / (1000 * 60 * 60 * 24);
-    if (diff < 0) return 'overdue';
-    if (diff <= 3) return 'soon';
-    return 'ok';
-  }
-
-  window.toggleGoal = function(idx) { data.goals[idx].done = !data.goals[idx].done; saveData(); };
-  window.deleteGoal = function(idx) { data.goals.splice(idx,1); saveData(); };
-  window.updateGoalProgress = function(idx, amount) {
-    const g = data.goals[idx];
-    const newPct = Math.min(((g.current || 0) / g.target) * 100 + amount, 100);
-    g.current = Math.round((newPct / 100) * g.target);
-    saveData();
-  };
-  window.toggleSubtask = function(goalIdx, subIdx) {
-    const subtasks = data.goals[goalIdx].subtasks || [];
-    if (subtasks[subIdx]) subtasks[subIdx].done = !subtasks[subIdx].done;
-    saveData();
-  };
-
-  function renderProfile() {
-    document.getElementById('profileName').value = data.profileName || '';
-    const grid = document.getElementById('photoGrid');
-    grid.innerHTML = data.photos.map((p, i) => `<div><img src="${p}" alt="photo"><br><button class="outline" onclick="deletePhoto(${i})">✕</button></div>`).join('');
-    const nlist = document.getElementById('noteList');
-    nlist.innerHTML = data.notes.map((n, i) => `<div class="list-item">${n} <button class="outline" onclick="deleteNote(${i})"><i class="fas fa-trash"></i></button></div>`).join('');
-
-    document.getElementById('notifDaily').checked = data.notifSettings?.daily ?? true;
-    document.getElementById('notifGoals').checked = data.notifSettings?.goals ?? true;
-    document.getElementById('notifHabits').checked = data.notifSettings?.habits ?? true;
-    document.getElementById('notifBrowser').checked = data.notifSettings?.browser ?? false;
-
-    document.getElementById('galleryGrid').innerHTML = data.photos.map((p, i) => `<div class="gallery-item"><img src="${p}" alt=""><div class="overlay">${i + 1}</div></div>`).join('') || '<div class="small-note">No photos yet</div>';
-    document.getElementById('docGrid').innerHTML = data.documents.map((d, i) => `<div class="doc-item"><img src="${d}" alt="doc"><div>Doc ${i + 1}</div></div>`).join('') || '<div class="small-note">No documents</div>';
-    document.getElementById('voiceList').innerHTML = data.voiceNotes.map((v, i) => `<div class="list-item"><span>Voice Note ${i + 1}</span> <button class="outline" onclick="playVoiceNote(${i})">▶</button> <button class="outline" onclick="deleteVoiceNote(${i})"><i class="fas fa-trash"></i></button></div>`).join('') || '<div class="small-note">No voice notes</div>';
-    document.getElementById('cameraPhotos').innerHTML = data.photos.slice(-6).reverse().map((p, i) => `<img src="${p}" alt="capture">`).join('');
-  }
-  window.deletePhoto = function(idx) { data.photos.splice(idx,1); saveData(); };
-  window.deleteNote = function(idx) { data.notes.splice(idx,1); saveData(); };
-  window.deleteVoiceNote = function(idx) { data.voiceNotes.splice(idx,1); saveData(); };
-  window.playVoiceNote = function(idx) { const audio = new Audio(data.voiceNotes[idx]); audio.play(); };
-
-  function showToast(message, type = 'info') {
-    const container = document.querySelector('.notification-panel') || document.body;
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check' : type === 'warning' ? 'exclamation' : type === 'error' ? 'times' : 'info'}-circle"></i> ${message}`;
-    container.insertBefore(toast, container.firstChild);
-    setTimeout(() => toast.remove(), 4000);
-  }
-
-  function sendBrowserNotification(title, body) {
-    if (Notification.permission === 'granted') {
-      new Notification(title, { body, icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🌾</text></svg>' });
-    }
-  }
-
-  function checkDeadlines() {
-    const today = new Date().toISOString().split('T')[0];
-    const upcoming = data.goals.filter(g => g.deadline && !g.done && g.deadline <= today);
-    if (upcoming.length && data.notifSettings?.goals) {
-      sendBrowserNotification('Goal Deadline!', `${upcoming.length} goal(s) due today`);
-      showToast(`${upcoming.length} goal(s) due today!`, 'warning');
-    }
-  }
-
-  function checkHabitStreaks() {
-    const broken = data.habits.filter((h, i) => {
-      const streak = data.habitStreaks[h]?.streak || 0;
-      const lastDate = data.habitStreaks[h]?.lastDate;
-      const today = getTodayKey();
-      return streak > 0 && lastDate !== today && lastDate !== getYesterday(today);
-    });
-    if (broken.length && data.notifSettings?.habits) {
-      sendBrowserNotification('Habit Streak at Risk!', `${broken.length} habit streak(s) may break`);
-    }
-  }
-
-  setTimeout(checkDeadlines, 5000);
-  setInterval(checkDeadlines, 3600000);
-  setInterval(checkHabitStreaks, 3600000);
-
-  function renderAll() { renderDashboard(); renderFarm(); renderDaily(); renderMoney(); renderGoals(); renderProfile(); }
-
-  document.addEventListener('DOMContentLoaded', function() {
-    loadData(); renderAll();
-      document.getElementById('farmPlantDate').valueAsDate = new Date();
-
-    document.querySelectorAll('.nav-tabs button').forEach(function(btn) {
-      btn.onclick = function() {
-        var page = this.getAttribute('data-page');
-        document.querySelectorAll('.nav-tabs button').forEach(function(b) { b.classList.remove('active'); });
-        this.classList.add('active');
-        document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
-        document.getElementById('page-' + page).classList.add('active');
+      window.toggleGoal = function (idx) {
+        data.goals[idx].done = !data.goals[idx].done;
+        saveData();
       };
-    });
 
-    document.getElementById('addFarmBtn').addEventListener('click', function() {
-      const crop = document.getElementById('farmCrop').value.trim() || 'unknown';
-      const category = document.getElementById('farmCategory').value;
-      const field = document.getElementById('farmField').value.trim() || 'field';
-      const size = parseFloat(document.getElementById('farmSize').value) || 0;
-      const season = document.getElementById('farmSeason').value;
-      const plantDate = document.getElementById('farmPlantDate').value;
-      const cost = parseFloat(document.getElementById('farmCost').value) || 0;
-      const price = parseFloat(document.getElementById('farmPrice').value) || 0;
-      const harvest = parseFloat(document.getElementById('farmHarvest').value) || 0;
-      const fertilizer = parseFloat(document.getElementById('farmFertilizer').value) || 0;
-      const pesticide = parseFloat(document.getElementById('farmPesticide').value) || 0;
-      data.farm.push({ crop, category, field, size, season, plantDate, cost, price, harvest, fertilizer, pesticide, date: new Date().toISOString() });
-      saveData();
-    });
-
-    document.getElementById('addDailyBtn').addEventListener('click', function() {
-      const sleep = parseFloat(document.getElementById('dailySleep').value) || 0;
-      const work = parseFloat(document.getElementById('dailyWork').value) || 0;
-      const prayer = parseFloat(document.getElementById('dailyPrayer').value) || 0;
-      const exercise = parseFloat(document.getElementById('dailyExercise').value) || 0;
-      const study = parseFloat(document.getElementById('dailyStudy').value) || 0;
-      data.daily.push({ sleep, work, prayer, exercise, study, date: new Date().toISOString() });
-      saveData();
-    });
-    document.getElementById('addHabitBtn').addEventListener('click', function() {
-      const val = document.getElementById('habitInput').value.trim();
-      if (val) { data.habits.push(val); document.getElementById('habitInput').value=''; saveData(); }
-    });
-
-    document.querySelectorAll('.mood-btn').forEach(btn => {
-      btn.addEventListener('click', function() {
-        const mood = this.dataset.mood;
-        const today = getTodayKey();
-        data.moods.push({ mood, date: today });
+      window.deleteGoal = function (idx) {
+        data.goals.splice(idx, 1);
         saveData();
-        document.getElementById('todayMood').innerText = mood;
-      });
-    });
+      };
 
-    document.getElementById('waterPlus').addEventListener('click', function() {
-      const today = getTodayKey();
-      const entry = data.water.find(w => w.date === today);
-      if (entry) entry.count++;
-      else data.water.push({ date: today, count: 1 });
-      saveData();
-    });
-    document.getElementById('waterMinus').addEventListener('click', function() {
-      const today = getTodayKey();
-      const entry = data.water.find(w => w.date === today);
-      if (entry && entry.count > 0) { entry.count--; saveData(); }
-    });
-
-    document.getElementById('addMealBtn').addEventListener('click', function() {
-      const type = document.getElementById('mealType').value;
-      const desc = document.getElementById('mealDesc').value.trim();
-      if (desc) { data.meals.push({ type, desc, date: getTodayKey() }); document.getElementById('mealDesc').value = ''; saveData(); }
-    });
-
-    document.getElementById('addJournalBtn').addEventListener('click', function() {
-      const text = document.getElementById('journalInput').value.trim();
-      if (text) { data.journals.push({ text, date: getTodayKey() }); document.getElementById('journalInput').value = ''; saveData(); }
-    });
-
-    document.getElementById('addMoneyBtn').addEventListener('click', function() {
-      const salary = parseFloat(document.getElementById('moneySalary').value) || 0;
-      const income = parseFloat(document.getElementById('moneyIncome').value) || 0;
-      const expense = parseFloat(document.getElementById('moneyExpense').value) || 0;
-      if (salary) data.money.push({ type: 'salary', amount: salary, id: Date.now() });
-      if (income) data.money.push({ type: 'income', amount: income, id: Date.now() + 1 });
-      if (expense) {
-        const category = document.getElementById('expenseCategory').value;
-        data.money.push({ type: 'expense', amount: expense, id: Date.now() + 2, category });
-        data.expenses.push({ type: 'expense', amount: expense, category, date: getTodayKey() });
-      }
-      saveData();
-    });
-
-    document.getElementById('addExpenseBtn').addEventListener('click', function() {
-      const amount = parseFloat(document.getElementById('expenseAmount').value) || 0;
-      const desc = document.getElementById('expenseDesc').value.trim() || 'Expense';
-      const category = document.getElementById('expenseCategory').value;
-      if (amount) {
-        data.money.push({ type: 'expense', amount, id: Date.now(), category, desc });
-        data.expenses.push({ type: 'expense', amount, category, date: getTodayKey(), desc });
-        document.getElementById('expenseAmount').value = '';
-        document.getElementById('expenseDesc').value = '';
+      window.updateGoalProgress = function (idx, amount) {
+        const g = data.goals[idx];
+        if (!g) return;
+        const currentPct =
+          g.target > 0 ? ((g.current || 0) / g.target) * 100 : 0;
+        const newPct = Math.min(currentPct + amount, 100);
+        g.current = Math.round((newPct / 100) * g.target);
+        if (newPct >= 100) g.done = true;
         saveData();
-      }
-    });
+      };
 
-    document.getElementById('addSavingsBtn').addEventListener('click', function() {
-      const name = document.getElementById('savingsName').value.trim() || 'Goal';
-      const target = parseFloat(document.getElementById('savingsTarget').value) || 0;
-      const current = parseFloat(document.getElementById('savingsCurrent').value) || 0;
-      if (target) {
-        data.savingsGoals.push({ name, target, current });
-        document.getElementById('savingsName').value = '';
-        document.getElementById('savingsTarget').value = '';
-        document.getElementById('savingsCurrent').value = '';
-        saveData();
-      }
-    });
-
-    document.getElementById('addRecurringBtn').addEventListener('click', function() {
-      const name = document.getElementById('recurringName').value.trim() || 'Expense';
-      const amount = parseFloat(document.getElementById('recurringAmount').value) || 0;
-      const freq = document.getElementById('recurringFreq').value;
-      if (amount) {
-        data.recurringExpenses.push({ name, amount, freq });
-        document.getElementById('recurringName').value = '';
-        document.getElementById('recurringAmount').value = '';
-        saveData();
-      }
-    });
-
-    document.getElementById('moneyCurrency').addEventListener('change', function() {
-      data.currency = this.value;
-      saveData();
-    });
-
-    document.getElementById('addGoalBtn').addEventListener('click', function() {
-      const title = document.getElementById('goalTitle').value.trim() || 'goal';
-      const category = document.getElementById('goalCategory').value;
-      const priority = document.getElementById('goalPriority').value;
-      const period = document.getElementById('goalPeriod').value;
-      const target = parseFloat(document.getElementById('goalTarget').value) || 0;
-      const current = parseFloat(document.getElementById('goalCurrent').value) || 0;
-      const deadline = document.getElementById('goalDeadline').value;
-      const subtasksStr = document.getElementById('goalSubtasks').value.trim();
-      const subtasks = subtasksStr ? subtasksStr.split(',').map(s => ({ text: s.trim(), done: false })) : [];
-      data.goals.push({ title, category, priority, period, target, current, deadline, subtasks, done: false });
-      document.getElementById('goalTitle').value = '';
-      document.getElementById('goalSubtasks').value = '';
-      document.getElementById('goalCurrent').value = '0';
-      saveData();
-    });
-
-    document.getElementById('filterGoalCategory').addEventListener('change', renderGoals);
-    document.getElementById('filterGoalPriority').addEventListener('change', renderGoals);
-
-    document.getElementById('reportDailyBtn').addEventListener('click', function() {
-      document.getElementById('reportContent').innerHTML = `<strong>Daily report</strong><br>Farm entries: ${data.farm.length} · Balance: $${getBalance()} · Goals done: ${data.goals.filter(g=>g.done).length}`;
-    });
-    document.getElementById('reportWeeklyBtn').addEventListener('click', function() {
-      document.getElementById('reportContent').innerHTML = `<strong>Weekly report</strong><br>Total harvest: ${data.farm.reduce((s,f)=>s+(f.harvest||0),0)} kg · Total expenses: $${data.money.filter(m=>m.type==='expense').reduce((s,m)=>s+m.amount,0)}`;
-    });
-    document.getElementById('reportMonthlyBtn').addEventListener('click', function() {
-      document.getElementById('reportContent').innerHTML = `<strong>Monthly report</strong><br>💰 Balance: $${getBalance()} · 🌾 Harvest: ${data.farm.reduce((s,f)=>s+(f.harvest||0),0)} kg · 🎯 Goals completed: ${data.goals.filter(g=>g.done).length}`;
-    });
-
-    document.getElementById('photoUpload').addEventListener('change', function(e) {
-      const files = e.target.files;
-      for (let f of files) {
-        const reader = new FileReader();
-        reader.onload = function(ev) { data.photos.push(ev.target.result); saveData(); };
-        reader.readAsDataURL(f);
-      }
-      this.value = '';
-    });
-    document.getElementById('addNoteBtn').addEventListener('click', function() {
-      const note = document.getElementById('noteInput').value.trim();
-      if (note) { data.notes.push(note); document.getElementById('noteInput').value=''; saveData(); }
-    });
-    document.getElementById('profileName').addEventListener('change', function() {
-      data.profileName = this.value.trim() || 'Farmer';
-      saveData();
-    });
-
-    document.getElementById('requestNotifBtn').addEventListener('click', async function() {
-      if ('Notification' in window) {
-        const perm = await Notification.requestPermission();
-        document.getElementById('notifStatus').innerText = perm === 'granted' ? 'Notifications enabled!' : 'Permission denied';
-        if (perm === 'granted') {
-          data.notifSettings.browser = true;
+      window.toggleSubtask = function (goalIdx, subIdx) {
+        const goal = data.goals[goalIdx];
+        if (!goal) return;
+        const subtasks = goal.subtasks || [];
+        if (subtasks[subIdx]) {
+          subtasks[subIdx].done = !subtasks[subIdx].done;
           saveData();
-          sendBrowserNotification('Welcome!', 'Notifications enabled for Farming & Life Tracker');
         }
-      } else {
-        document.getElementById('notifStatus').innerText = 'Notifications not supported';
-      }
-    });
+      };
 
-    ['notifDaily', 'notifGoals', 'notifHabits', 'notifBrowser'].forEach(id => {
-      document.getElementById(id).addEventListener('change', function() {
-        data.notifSettings = data.notifSettings || {};
-        data.notifSettings[id.replace('notif', '').toLowerCase()] = this.checked;
+      function renderProfile() {
+        document.getElementById("profileName").value = data.profileName || "";
+
+        const grid = document.getElementById("photoGrid");
+        grid.innerHTML = data.photos
+          .map(
+            (p, i) =>
+              `<div><img src="${p}" alt="photo"><br><button class="outline" onclick="deletePhoto(${i})">✕</button></div>`,
+          )
+          .join("");
+
+        const nlist = document.getElementById("noteList");
+        nlist.innerHTML = data.notes
+          .map(
+            (n, i) =>
+              `<div class="list-item">${n} <button class="outline" onclick="deleteNote(${i})"><i class="fas fa-trash"></i></button></div>`,
+          )
+          .join("");
+
+        document.getElementById("galleryGrid").innerHTML =
+          data.photos
+            .map(
+              (p, i) =>
+                `<div class="gallery-item"><img src="${p}" alt=""><div class="overlay">${i + 1}</div></div>`,
+            )
+            .join("") || '<div class="small-note">No photos yet</div>';
+
+        document.getElementById("docGrid").innerHTML =
+          data.documents
+            .map(
+              (d, i) =>
+                `<div class="doc-item"><img src="${d}" alt="doc"><div>Doc ${i + 1}</div></div>`,
+            )
+            .join("") || '<div class="small-note">No documents</div>';
+
+        document.getElementById("voiceList").innerHTML =
+          data.voiceNotes
+            .map(
+              (v, i) =>
+                `<div class="list-item"><span>Voice Note ${i + 1}</span> <button class="outline" onclick="playVoiceNote(${i})">▶</button> <button class="outline" onclick="deleteVoiceNote(${i})"><i class="fas fa-trash"></i></button></div>`,
+            )
+            .join("") || '<div class="small-note">No voice notes</div>';
+
+        document.getElementById("cameraPhotos").innerHTML = data.photos
+          .slice(-6)
+          .reverse()
+          .map((p) => `<img src="${p}" alt="capture">`)
+          .join("");
+      }
+
+      window.deletePhoto = function (idx) {
+        data.photos.splice(idx, 1);
         saveData();
-      });
-    });
+      };
+      window.deleteNote = function (idx) {
+        data.notes.splice(idx, 1);
+        saveData();
+      };
+      window.deleteVoiceNote = function (idx) {
+        data.voiceNotes.splice(idx, 1);
+        saveData();
+      };
+      window.playVoiceNote = function (idx) {
+        const audio = new Audio(data.voiceNotes[idx]);
+        audio.play();
+      };
 
-    document.querySelectorAll('.media-tabs button').forEach(btn => {
-      btn.addEventListener('click', function() {
-        document.querySelectorAll('.media-tabs button').forEach(b => b.classList.remove('active'));
-        this.classList.add('active');
-        const media = this.dataset.media;
-        document.querySelectorAll('.media-panel').forEach(p => p.style.display = 'none');
-        document.getElementById('media' + media.charAt(0).toUpperCase() + media.slice(1)).style.display = 'block';
-      });
-    });
-
-    let cameraStream = null;
-    document.getElementById('openCameraBtn').addEventListener('click', async function() {
-      try {
-        cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-        const video = document.getElementById('cameraPreview');
-        video.srcObject = cameraStream;
-        video.style.display = 'block';
-        document.getElementById('takePhotoBtn').style.display = 'inline-flex';
-        document.getElementById('openCameraBtn').style.display = 'none';
-      } catch(e) { showToast('Camera access denied', 'error'); }
-    });
-
-    document.getElementById('takePhotoBtn').addEventListener('click', function() {
-      const video = document.getElementById('cameraPreview');
-      const canvas = document.getElementById('cameraCanvas');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      canvas.getContext('2d').drawImage(video, 0, 0);
-      const dataUrl = canvas.toDataURL('image/jpeg');
-      data.photos.push(dataUrl);
-      saveData();
-      showToast('Photo captured!', 'success');
-    });
-
-    let mediaRecorder = null;
-    let audioChunks = [];
-    document.getElementById('recordBtn').addEventListener('click', async function() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream);
-        audioChunks = [];
-        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-        mediaRecorder.onstop = () => {
-          const blob = new Blob(audioChunks, { type: 'audio/webm' });
-          const reader = new FileReader();
-          reader.onload = () => { data.voiceNotes.push(reader.result); saveData(); showToast('Voice note saved!', 'success'); };
-          reader.readAsDataURL(blob);
-        };
-        mediaRecorder.start();
-        document.getElementById('recordBtn').classList.add('recording');
-        document.getElementById('voiceStatus').innerText = 'Recording...';
-        document.getElementById('stopRecordBtn').style.display = 'inline-flex';
-      } catch(e) { showToast('Microphone access denied', 'error'); }
-    });
-
-    document.getElementById('stopRecordBtn').addEventListener('click', function() {
-      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-        mediaRecorder.stop();
-        mediaRecorder.stream.getTracks().forEach(t => t.stop());
-        document.getElementById('recordBtn').classList.remove('recording');
-        document.getElementById('voiceStatus').innerText = 'Press to record';
-        document.getElementById('stopRecordBtn').style.display = 'none';
+      function renderAll() {
+        renderDashboard();
+        renderFarm();
+        renderDaily();
+        renderMoney();
+        renderGoals();
+        renderProfile();
+        renderCharts();
       }
-    });
 
-    document.getElementById('docUpload').addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(ev) { data.documents.push(ev.target.result); saveData(); showToast('Document scanned!', 'success'); };
-        reader.readAsDataURL(file);
+      // ============================================================
+      // CHART RENDERER
+      // ============================================================
+
+      function renderCharts() {
+        const currency = getCurrency();
+
+        document.getElementById("anaHarvest").innerText =
+          data.farm.reduce((s, f) => s + (f.harvest || 0), 0) + " kg";
+        document.getElementById("anaProfit").innerText =
+          currency +
+          data.farm.reduce((s, f) => s + calculateProfit(f), 0).toFixed(0);
+        document.getElementById("anaGoals").innerText =
+          data.goals.filter((g) => g.done).length + "/" + data.goals.length;
+        document.getElementById("anaBalance").innerText =
+          currency + getBalance();
+
+        // Farm Trend Chart
+        const farmTrendCtx = document.getElementById("farmTrendChart");
+        if (farmTrendCtx && typeof Chart !== "undefined") {
+          const farmByDate = {};
+          data.farm.forEach((f) => {
+            const date = f.date?.split("T")[0] || "unknown";
+            farmByDate[date] = (farmByDate[date] || 0) + calculateProfit(f);
+          });
+          const labels = Object.keys(farmByDate).slice(-7);
+          const values = Object.values(farmByDate).slice(-7);
+          new Chart(farmTrendCtx.getContext("2d"), {
+            type: "line",
+            data: {
+              labels: labels,
+              datasets: [
+                {
+                  label: "Profit",
+                  data: values,
+                  borderColor: "#2b7a4b",
+                  backgroundColor: "rgba(43,122,75,0.1)",
+                  fill: true,
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+            },
+          });
+        }
+
+        // Expense Chart
+        const expenseCtx = document.getElementById("expenseChart");
+        if (expenseCtx && typeof Chart !== "undefined") {
+          const catTotals = {};
+          data.expenses.forEach((e) => {
+            catTotals[e.category] = (catTotals[e.category] || 0) + e.amount;
+          });
+          new Chart(expenseCtx.getContext("2d"), {
+            type: "doughnut",
+            data: {
+              labels: Object.keys(catTotals),
+              datasets: [
+                {
+                  data: Object.values(catTotals),
+                  backgroundColor: [
+                    "#e74c3c",
+                    "#3498db",
+                    "#f39c12",
+                    "#9b59b6",
+                    "#27ae60",
+                    "#95a5a6",
+                  ],
+                },
+              ],
+            },
+            options: { responsive: true, maintainAspectRatio: false },
+          });
+        }
+
+        // Mood Chart
+        const moodCtx = document.getElementById("moodChart");
+        if (moodCtx && typeof Chart !== "undefined") {
+          const moodCounts = { "😊": 0, "🙂": 0, "😐": 0, "😔": 0, "😢": 0 };
+          data.moods.forEach((m) => {
+            if (moodCounts.hasOwnProperty(m.mood)) moodCounts[m.mood]++;
+          });
+          new Chart(moodCtx.getContext("2d"), {
+            type: "bar",
+            data: {
+              labels: Object.keys(moodCounts),
+              datasets: [
+                {
+                  label: "Mood Count",
+                  data: Object.values(moodCounts),
+                  backgroundColor: [
+                    "#27ae60",
+                    "#2ecc71",
+                    "#f1c40f",
+                    "#e67e22",
+                    "#e74c3c",
+                  ],
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+            },
+          });
+        }
+
+        // Water Chart
+        const waterCtx = document.getElementById("waterChart");
+        if (waterCtx && typeof Chart !== "undefined") {
+          const waterByDate = {};
+          data.water.forEach((w) => {
+            waterByDate[w.date] = w.count;
+          });
+          new Chart(waterCtx.getContext("2d"), {
+            type: "line",
+            data: {
+              labels: Object.keys(waterByDate).slice(-7),
+              datasets: [
+                {
+                  label: "Glasses",
+                  data: Object.values(waterByDate).slice(-7),
+                  borderColor: "#3498db",
+                  backgroundColor: "rgba(52,152,219,0.1)",
+                  fill: true,
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+            },
+          });
+        }
+
+        // Comparison Table
+        const compTable = document.getElementById("comparisonTable");
+        if (compTable) {
+          const now = new Date();
+          const weeklyHarvest = data.farm
+            .filter((f) => {
+              const d = new Date(f.date);
+              return (now - d) / (1000 * 60 * 60 * 24) <= 7;
+            })
+            .reduce((s, f) => s + (f.harvest || 0), 0);
+          const monthlyHarvest = data.farm.reduce(
+            (s, f) => s + (f.harvest || 0),
+            0,
+          );
+          const weeklyExp = data.money
+            .filter(
+              (m) =>
+                m.type === "expense" &&
+                new Date(m.id) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+            )
+            .reduce((s, m) => s + m.amount, 0);
+          const monthlyExp = data.money
+            .filter((m) => m.type === "expense")
+            .reduce((s, m) => s + m.amount, 0);
+          const weeklyGoals = data.goals.filter(
+            (g) =>
+              g.done &&
+              new Date(g.id) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+          ).length;
+          const monthlyGoals = data.goals.filter((g) => g.done).length;
+
+          compTable.innerHTML = `<table class="compare-table"><thead><tr><th>Metric</th><th>Weekly</th><th>Monthly</th><th>Change</th></tr></thead><tbody>
+      <tr><td>Harvest (kg)</td><td>${weeklyHarvest}</td><td>${monthlyHarvest}</td><td class="${weeklyHarvest > 0 ? (monthlyHarvest / weeklyHarvest >= 4 ? "positive" : "negative") : ""}">${weeklyHarvest > 0 ? ((monthlyHarvest / weeklyHarvest / 4 - 1) * 100).toFixed(0) : 0}%</td></tr>
+      <tr><td>Expenses</td><td>${currency}${weeklyExp}</td><td>${currency}${monthlyExp}</td><td class="${weeklyExp > 0 ? (monthlyExp / weeklyExp <= 4 ? "positive" : "negative") : ""}">${weeklyExp > 0 ? ((monthlyExp / weeklyExp / 4 - 1) * 100).toFixed(0) : 0}%</td></tr>
+      <tr><td>Goals Completed</td><td>${weeklyGoals}</td><td>${monthlyGoals}</td><td class="${weeklyGoals > 0 ? (monthlyGoals / weeklyGoals >= 1 ? "positive" : "negative") : ""}">${weeklyGoals > 0 ? ((monthlyGoals / weeklyGoals - 1) * 100).toFixed(0) : 0}%</td></tr>
+    </tbody></table>`;
+        }
       }
-      this.value = '';
-    });
 
-    if (data.reminders.length === 0) {
-      data.reminders.push({ text: 'Water crops', date: 'today' });
-      data.reminders.push({ text: 'Check savings', date: 'tomorrow' });
-      saveData();
-    }
+      // ============================================================
+      // DOM EVENT LISTENERS
+      // ============================================================
 
-    renderCharts();
-  });
+      document.addEventListener("DOMContentLoaded", function () {
+        console.log("📋 DOM loaded, initializing...");
+        loadData();
+        renderAll();
 
-  function renderCharts() {
-    document.getElementById('anaHarvest').innerText = data.farm.reduce((s, f) => s + (f.harvest || 0), 0) + ' kg';
-    document.getElementById('anaProfit').innerText = getCurrency() + data.farm.reduce((s, f) => s + calculateProfit(f), 0).toFixed(0);
-    document.getElementById('anaGoals').innerText = data.goals.filter(g => g.done).length + '/' + data.goals.length;
-    document.getElementById('anaBalance').innerText = getCurrency() + getBalance();
+        // Set default date
+        const plantDateInput = document.getElementById("farmPlantDate");
+        if (plantDateInput) {
+          plantDateInput.valueAsDate = new Date();
+        }
 
-    const farmTrendCtx = document.getElementById('farmTrendChart');
-    if (farmTrendCtx) {
-      const farmByDate = {};
-      data.farm.forEach(f => {
-        const date = f.date?.split('T')[0] || 'unknown';
-        farmByDate[date] = (farmByDate[date] || 0) + calculateProfit(f);
-      });
-      new Chart(farmTrendCtx.getContext('2d'), {
-        type: 'line',
-        data: { labels: Object.keys(farmByDate).slice(-7), datasets: [{ label: 'Profit', data: Object.values(farmByDate).slice(-7), borderColor: '#2b7a4b', backgroundColor: 'rgba(43,122,75,0.1)', fill: true }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-      });
-    }
+        // Navigation
+        document.querySelectorAll(".nav-tabs button").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            const page = this.dataset.page;
+            document
+              .querySelectorAll(".nav-tabs button")
+              .forEach((b) => b.classList.remove("active"));
+            this.classList.add("active");
+            document
+              .querySelectorAll(".page")
+              .forEach((p) => p.classList.remove("active"));
+            const target = document.getElementById("page-" + page);
+            if (target) target.classList.add("active");
+          });
+        });
 
-    const expenseCtx = document.getElementById('expenseChart');
-    if (expenseCtx) {
-      const catTotals = {};
-      data.expenses.forEach(e => { catTotals[e.category] = (catTotals[e.category] || 0) + e.amount; });
-      new Chart(expenseCtx.getContext('2d'), {
-        type: 'doughnut',
-        data: { labels: Object.keys(catTotals), datasets: [{ data: Object.values(catTotals), backgroundColor: ['#e74c3c', '#3498db', '#f39c12', '#9b59b6', '#27ae60', '#95a5a6'] }] },
-        options: { responsive: true, maintainAspectRatio: false }
-      });
-    }
+        // Farm
+        document
+          .getElementById("addFarmBtn")
+          .addEventListener("click", function () {
+            const crop =
+              document.getElementById("farmCrop").value.trim() || "unknown";
+            const category = document.getElementById("farmCategory").value;
+            const field =
+              document.getElementById("farmField").value.trim() || "field";
+            const size =
+              parseFloat(document.getElementById("farmSize").value) || 0;
+            const season = document.getElementById("farmSeason").value;
+            const plantDate = document.getElementById("farmPlantDate").value;
+            const cost =
+              parseFloat(document.getElementById("farmCost").value) || 0;
+            const price =
+              parseFloat(document.getElementById("farmPrice").value) || 0;
+            const harvest =
+              parseFloat(document.getElementById("farmHarvest").value) || 0;
+            const fertilizer =
+              parseFloat(document.getElementById("farmFertilizer").value) || 0;
+            const pesticide =
+              parseFloat(document.getElementById("farmPesticide").value) || 0;
 
-    const moodCtx = document.getElementById('moodChart');
-    if (moodCtx) {
-      const moodCounts = { '😊': 0, '🙂': 0, '😐': 0, '😔': 0, '😢': 0 };
-      data.moods.forEach(m => { if (moodCounts.hasOwnProperty(m.mood)) moodCounts[m.mood]++; });
-      new Chart(moodCtx.getContext('2d'), {
-        type: 'bar',
-        data: { labels: Object.keys(moodCounts), datasets: [{ label: 'Mood Count', data: Object.values(moodCounts), backgroundColor: ['#27ae60', '#2ecc71', '#f1c40f', '#e67e22', '#e74c3c'] }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-      });
-    }
-
-    const waterCtx = document.getElementById('waterChart');
-    if (waterCtx) {
-      const waterByDate = {};
-      data.water.forEach(w => { waterByDate[w.date] = w.count; });
-      new Chart(waterCtx.getContext('2d'), {
-        type: 'line',
-        data: { labels: Object.keys(waterByDate).slice(-7), datasets: [{ label: 'Glasses', data: Object.values(waterByDate).slice(-7), borderColor: '#3498db', backgroundColor: 'rgba(52,152,219,0.1)', fill: true }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-      });
-    }
-
-    const compTable = document.getElementById('comparisonTable');
-    if (compTable) {
-      const weeklyHarvest = data.farm.filter(f => { const d = new Date(f.date); const now = new Date(); return (now - d) / (1000*60*60*24) <= 7; }).reduce((s, f) => s + (f.harvest || 0), 0);
-      const monthlyHarvest = data.farm.reduce((s, f) => s + (f.harvest || 0), 0);
-      const weeklyExp = data.money.filter(m => m.type === 'expense' && new Date(m.id) > new Date(Date.now() - 7*24*60*60*1000)).reduce((s, m) => s + m.amount, 0);
-      const monthlyExp = data.money.filter(m => m.type === 'expense').reduce((s, m) => s + m.amount, 0);
-      const weeklyGoals = data.goals.filter(g => g.done && new Date(g.date) > new Date(Date.now() - 7*24*60*60*1000)).length;
-      const monthlyGoals = data.goals.filter(g => g.done).length;
-
-      compTable.innerHTML = `<table class="compare-table"><thead><tr><th>Metric</th><th>Weekly</th><th>Monthly</th><th>Change</th></tr></thead><tbody>
-        <tr><td>Harvest (kg)</td><td>${weeklyHarvest}</td><td>${monthlyHarvest}</td><td class="${monthlyHarvest >= weeklyHarvest * 4 ? 'positive' : 'negative'}">${weeklyHarvest > 0 ? ((monthlyHarvest / weeklyHarvest) - 1 * 100).toFixed(0) : 0}%</td></tr>
-        <tr><td>Expenses</td><td>${getCurrency()}${weeklyExp}</td><td>${getCurrency()}${monthlyExp}</td><td class="${monthlyExp <= weeklyExp * 4 ? 'positive' : 'negative'}">${weeklyExp > 0 ? ((monthlyExp / weeklyExp) - 1 * 100).toFixed(0) : 0}%</td></tr>
-        <tr><td>Goals Completed</td><td>${weeklyGoals}</td><td>${monthlyGoals}</td><td class="${monthlyGoals >= weeklyGoals ? 'positive' : 'negative'}">${weeklyGoals > 0 ? ((monthlyGoals / weeklyGoals) - 1 * 100).toFixed(0) : 0}%</td></tr>
-      </tbody></table>`;
-    }
-  }
-
-  window.renderCharts = renderCharts;
-
-  document.getElementById('exportPdfBtn')?.addEventListener('click', async function() {
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF();
-    pdf.setFontSize(20);
-    pdf.text('Farming & Life Tracker Report', 20, 20);
-    pdf.setFontSize(12);
-    pdf.text(`Generated: ${new Date().toLocaleDateString()}`, 20, 30);
-    pdf.text(`Balance: ${getCurrency()}${getBalance()}`, 20, 45);
-    pdf.text(`Total Harvest: ${data.farm.reduce((s, f) => s + (f.harvest || 0), 0)} kg`, 20, 55);
-    pdf.text(`Goals Completed: ${data.goals.filter(g => g.done).length}/${data.goals.length}`, 20, 65);
-    pdf.text('Farm Profit: ' + getCurrency() + data.farm.reduce((s, f) => s + calculateProfit(f), 0).toFixed(0), 20, 75);
-    pdf.save('farm-tracker-report.pdf');
-  });
-
-  document.getElementById('emailReportBtn')?.addEventListener('click', function() {
-    const subject = encodeURIComponent('Farming & Life Tracker Report');
-    const body = encodeURIComponent(`Report ${new Date().toLocaleDateString()}\n\nBalance: ${getCurrency()}${getBalance()}\nTotal Harvest: ${data.farm.reduce((s, f) => s + (f.harvest || 0), 0)} kg\nGoals: ${data.goals.filter(g => g.done).length}/${data.goals.length}\nFarm Profit: ${getCurrency()}${data.farm.reduce((s, f) => s + calculateProfit(f), 0).toFixed(0)}`);
-    window.location.href = `mailto:?subject=${subject}&body=${body}`;
-  });
-
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    if (savedTheme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
-
-    document.getElementById('themeToggle').addEventListener('click', function() {
-      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-      if (isDark) {
-        document.documentElement.removeAttribute('data-theme');
-        localStorage.setItem('theme', 'light');
-        this.innerText = '🌙';
-      } else {
-        document.documentElement.setAttribute('data-theme', 'dark');
-        localStorage.setItem('theme', 'dark');
-        this.innerText = '☀️';
-      }
-      if (typeof renderCharts === 'function') setTimeout(renderCharts, 100);
-    });
-
-    document.getElementById('exportDataBtn').addEventListener('click', function() {
-      const exportData = JSON.stringify(data, null, 2);
-      const blob = new Blob([exportData], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `farm-tracker-backup-${new Date().toISOString().split('T')[0]}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-    });
-
-    document.getElementById('importDataBtn').addEventListener('click', function() {
-      document.getElementById('importFile').click();
-    });
-
-    document.getElementById('importFile').addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(evt) {
-          try {
-            const imported = JSON.parse(evt.target.result);
-            data = { ...data, ...imported };
+            data.farm.push({
+              crop,
+              category,
+              field,
+              size,
+              season,
+              plantDate,
+              cost,
+              price,
+              harvest,
+              fertilizer,
+              pesticide,
+              date: new Date().toISOString(),
+            });
             saveData();
-            alert('Data imported successfully!');
-          } catch(err) { alert('Invalid JSON file'); }
-        };
-        reader.readAsText(file);
+            showToast("Farm activity added!", "success");
+          });
+
+        // Daily
+        document
+          .getElementById("addDailyBtn")
+          .addEventListener("click", function () {
+            const sleep =
+              parseFloat(document.getElementById("dailySleep").value) || 0;
+            const work =
+              parseFloat(document.getElementById("dailyWork").value) || 0;
+            const prayer =
+              parseFloat(document.getElementById("dailyPrayer").value) || 0;
+            const exercise =
+              parseFloat(document.getElementById("dailyExercise").value) || 0;
+            const study =
+              parseFloat(document.getElementById("dailyStudy").value) || 0;
+            data.daily.push({
+              sleep,
+              work,
+              prayer,
+              exercise,
+              study,
+              date: new Date().toISOString(),
+            });
+            saveData();
+            showToast("Daily routine logged!", "success");
+          });
+
+        document
+          .getElementById("addHabitBtn")
+          .addEventListener("click", function () {
+            const val = document.getElementById("habitInput").value.trim();
+            if (val) {
+              data.habits.push(val);
+              document.getElementById("habitInput").value = "";
+              saveData();
+              showToast("Habit added!", "success");
+            }
+          });
+
+        // Mood buttons
+        document.querySelectorAll(".mood-btn").forEach((btn) => {
+          btn.addEventListener("click", function () {
+            const mood = this.dataset.mood;
+            const today = getTodayKey();
+            // Remove existing mood for today
+            data.moods = data.moods.filter((m) => m.date !== today);
+            data.moods.push({ mood, date: today });
+            saveData();
+            document.getElementById("todayMood").innerText = mood;
+            showToast("Mood logged: " + mood, "success");
+          });
+        });
+
+        // Water
+        document
+          .getElementById("waterPlus")
+          .addEventListener("click", function () {
+            const today = getTodayKey();
+            const entry = data.water.find((w) => w.date === today);
+            if (entry) entry.count++;
+            else data.water.push({ date: today, count: 1 });
+            saveData();
+          });
+
+        document
+          .getElementById("waterMinus")
+          .addEventListener("click", function () {
+            const today = getTodayKey();
+            const entry = data.water.find((w) => w.date === today);
+            if (entry && entry.count > 0) {
+              entry.count--;
+              saveData();
+            }
+          });
+
+        // Meals
+        document
+          .getElementById("addMealBtn")
+          .addEventListener("click", function () {
+            const type = document.getElementById("mealType").value;
+            const desc = document.getElementById("mealDesc").value.trim();
+            if (desc) {
+              data.meals.push({ type, desc, date: getTodayKey() });
+              document.getElementById("mealDesc").value = "";
+              saveData();
+              showToast("Meal logged!", "success");
+            }
+          });
+
+        // Journal
+        document
+          .getElementById("addJournalBtn")
+          .addEventListener("click", function () {
+            const text = document.getElementById("journalInput").value.trim();
+            if (text) {
+              data.journals.push({ text, date: getTodayKey() });
+              document.getElementById("journalInput").value = "";
+              saveData();
+              showToast("Journal entry saved!", "success");
+            }
+          });
+
+        // Money
+        document
+          .getElementById("addMoneyBtn")
+          .addEventListener("click", function () {
+            const salary =
+              parseFloat(document.getElementById("moneySalary").value) || 0;
+            const income =
+              parseFloat(document.getElementById("moneyIncome").value) || 0;
+            const expense =
+              parseFloat(document.getElementById("moneyExpense").value) || 0;
+            const timestamp = Date.now();
+
+            if (salary)
+              data.money.push({
+                type: "salary",
+                amount: salary,
+                id: timestamp,
+              });
+            if (income)
+              data.money.push({
+                type: "income",
+                amount: income,
+                id: timestamp + 1,
+              });
+            if (expense) {
+              const category = document.getElementById("expenseCategory").value;
+              data.money.push({
+                type: "expense",
+                amount: expense,
+                id: timestamp + 2,
+                category,
+              });
+              data.expenses.push({
+                type: "expense",
+                amount: expense,
+                category,
+                date: getTodayKey(),
+                id: timestamp + 2,
+              });
+            }
+            saveData();
+            showToast("Transactions updated!", "success");
+          });
+
+        document
+          .getElementById("addExpenseBtn")
+          .addEventListener("click", function () {
+            const amount =
+              parseFloat(document.getElementById("expenseAmount").value) || 0;
+            const desc =
+              document.getElementById("expenseDesc").value.trim() || "Expense";
+            const category = document.getElementById("expenseCategory").value;
+            if (amount) {
+              const id = Date.now();
+              data.money.push({ type: "expense", amount, id, category, desc });
+              data.expenses.push({
+                type: "expense",
+                amount,
+                category,
+                date: getTodayKey(),
+                desc,
+                id,
+              });
+              document.getElementById("expenseAmount").value = "";
+              document.getElementById("expenseDesc").value = "";
+              saveData();
+              showToast("Expense added!", "success");
+            }
+          });
+
+        document
+          .getElementById("addSavingsBtn")
+          .addEventListener("click", function () {
+            const name =
+              document.getElementById("savingsName").value.trim() || "Goal";
+            const target =
+              parseFloat(document.getElementById("savingsTarget").value) || 0;
+            const current =
+              parseFloat(document.getElementById("savingsCurrent").value) || 0;
+            if (target) {
+              data.savingsGoals.push({ name, target, current });
+              document.getElementById("savingsName").value = "";
+              document.getElementById("savingsTarget").value = "";
+              document.getElementById("savingsCurrent").value = "";
+              saveData();
+              showToast("Savings goal added!", "success");
+            }
+          });
+
+        document
+          .getElementById("addRecurringBtn")
+          .addEventListener("click", function () {
+            const name =
+              document.getElementById("recurringName").value.trim() ||
+              "Expense";
+            const amount =
+              parseFloat(document.getElementById("recurringAmount").value) || 0;
+            const freq = document.getElementById("recurringFreq").value;
+            if (amount) {
+              data.recurringExpenses.push({ name, amount, freq });
+              document.getElementById("recurringName").value = "";
+              document.getElementById("recurringAmount").value = "";
+              saveData();
+              showToast("Recurring expense added!", "success");
+            }
+          });
+
+        document
+          .getElementById("moneyCurrency")
+          .addEventListener("change", function () {
+            data.currency = this.value;
+            saveData();
+          });
+
+        // Goals
+        document
+          .getElementById("addGoalBtn")
+          .addEventListener("click", function () {
+            const title =
+              document.getElementById("goalTitle").value.trim() || "goal";
+            const category = document.getElementById("goalCategory").value;
+            const priority = document.getElementById("goalPriority").value;
+            const period = document.getElementById("goalPeriod").value;
+            const target =
+              parseFloat(document.getElementById("goalTarget").value) || 0;
+            const current =
+              parseFloat(document.getElementById("goalCurrent").value) || 0;
+            const deadline = document.getElementById("goalDeadline").value;
+            const subtasksStr = document
+              .getElementById("goalSubtasks")
+              .value.trim();
+            const subtasks = subtasksStr
+              ? subtasksStr
+                  .split(",")
+                  .map((s) => ({ text: s.trim(), done: false }))
+              : [];
+
+            data.goals.push({
+              title,
+              category,
+              priority,
+              period,
+              target,
+              current,
+              deadline,
+              subtasks,
+              done: false,
+              date: new Date().toISOString(),
+              id: Date.now(),
+            });
+
+            document.getElementById("goalTitle").value = "";
+            document.getElementById("goalSubtasks").value = "";
+            document.getElementById("goalCurrent").value = "0";
+            document.getElementById("goalTarget").value = "500";
+            saveData();
+            showToast("Goal added!", "success");
+          });
+
+        document
+          .getElementById("filterGoalCategory")
+          .addEventListener("change", renderGoals);
+        document
+          .getElementById("filterGoalPriority")
+          .addEventListener("change", renderGoals);
+
+        // Reports
+        document
+          .getElementById("reportDailyBtn")
+          .addEventListener("click", function () {
+            const currency = getCurrency();
+            document.getElementById("reportContent").innerHTML =
+              `<strong>📅 Daily Report</strong><br>
+       Farm entries: ${data.farm.length} · Balance: ${currency}${getBalance()} · 
+       Goals done: ${data.goals.filter((g) => g.done).length}/${data.goals.length}`;
+          });
+
+        document
+          .getElementById("reportWeeklyBtn")
+          .addEventListener("click", function () {
+            const currency = getCurrency();
+            const totalHarvest = data.farm.reduce(
+              (s, f) => s + (f.harvest || 0),
+              0,
+            );
+            const totalExpenses = data.money
+              .filter((m) => m.type === "expense")
+              .reduce((s, m) => s + m.amount, 0);
+            document.getElementById("reportContent").innerHTML =
+              `<strong>📆 Weekly Report</strong><br>
+       Total harvest: ${totalHarvest} kg · Total expenses: ${currency}${totalExpenses}<br>
+       Net profit: ${currency}${(getBalance() + totalExpenses).toFixed(0)}`;
+          });
+
+        document
+          .getElementById("reportMonthlyBtn")
+          .addEventListener("click", function () {
+            const currency = getCurrency();
+            const totalHarvest = data.farm.reduce(
+              (s, f) => s + (f.harvest || 0),
+              0,
+            );
+            document.getElementById("reportContent").innerHTML =
+              `<strong>📊 Monthly Report</strong><br>
+       💰 Balance: ${currency}${getBalance()} · 🌾 Harvest: ${totalHarvest} kg · 
+       🎯 Goals completed: ${data.goals.filter((g) => g.done).length}/${data.goals.length}`;
+          });
+
+        // Profile / Photos
+        document
+          .getElementById("photoUpload")
+          .addEventListener("change", function (e) {
+            const files = e.target.files;
+            for (let f of files) {
+              const reader = new FileReader();
+              reader.onload = function (ev) {
+                data.photos.push(ev.target.result);
+                saveData();
+              };
+              reader.readAsDataURL(f);
+            }
+            this.value = "";
+            showToast("Photos uploaded!", "success");
+          });
+
+        document
+          .getElementById("addNoteBtn")
+          .addEventListener("click", function () {
+            const note = document.getElementById("noteInput").value.trim();
+            if (note) {
+              data.notes.push(note);
+              document.getElementById("noteInput").value = "";
+              saveData();
+              showToast("Note saved!", "success");
+            }
+          });
+
+        document
+          .getElementById("profileName")
+          .addEventListener("change", function () {
+            data.profileName = this.value.trim() || "Farmer";
+            saveData();
+          });
+
+        // Theme toggle
+        const savedTheme = localStorage.getItem("theme") || "light";
+        if (savedTheme === "dark") {
+          document.documentElement.setAttribute("data-theme", "dark");
+          document.getElementById("themeToggle").innerText = "☀️";
+        }
+
+        document
+          .getElementById("themeToggle")
+          .addEventListener("click", function () {
+            const isDark =
+              document.documentElement.getAttribute("data-theme") === "dark";
+            if (isDark) {
+              document.documentElement.removeAttribute("data-theme");
+              localStorage.setItem("theme", "light");
+              this.innerText = "🌙";
+            } else {
+              document.documentElement.setAttribute("data-theme", "dark");
+              localStorage.setItem("theme", "dark");
+              this.innerText = "☀️";
+            }
+            setTimeout(renderCharts, 100);
+          });
+
+        // Export/Import
+        document
+          .getElementById("exportDataBtn")
+          .addEventListener("click", function () {
+            const exportData = JSON.stringify(data, null, 2);
+            const blob = new Blob([exportData], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `farm-tracker-backup-${new Date().toISOString().split("T")[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast("Data exported!", "success");
+          });
+
+        document
+          .getElementById("importDataBtn")
+          .addEventListener("click", function () {
+            document.getElementById("importFile").click();
+          });
+
+        document
+          .getElementById("importFile")
+          .addEventListener("change", function (e) {
+            const file = e.target.files[0];
+            if (file) {
+              const reader = new FileReader();
+              reader.onload = function (evt) {
+                try {
+                  const imported = JSON.parse(evt.target.result);
+                  data = { ...data, ...imported };
+                  saveData();
+                  showToast("Data imported successfully!", "success");
+                } catch (err) {
+                  showToast("Invalid JSON file", "error");
+                }
+              };
+              reader.readAsText(file);
+            }
+            this.value = "";
+          });
+
+        // PDF Export
+        document
+          .getElementById("exportPdfBtn")
+          .addEventListener("click", async function () {
+            if (typeof window.jspdf === "undefined") {
+              showToast("PDF library loading...", "warning");
+              return;
+            }
+            try {
+              const { jsPDF } = window.jspdf;
+              const pdf = new jsPDF();
+              pdf.setFontSize(20);
+              pdf.text("🌾 Farming & Life Tracker Report", 20, 20);
+              pdf.setFontSize(12);
+              pdf.text(`Generated: ${new Date().toLocaleDateString()}`, 20, 35);
+              pdf.text(`Balance: ${getCurrency()}${getBalance()}`, 20, 50);
+              pdf.text(
+                `Total Harvest: ${data.farm.reduce((s, f) => s + (f.harvest || 0), 0)} kg`,
+                20,
+                60,
+              );
+              pdf.text(
+                `Goals Completed: ${data.goals.filter((g) => g.done).length}/${data.goals.length}`,
+                20,
+                70,
+              );
+              pdf.text(
+                `Farm Profit: ${getCurrency()}${data.farm.reduce((s, f) => s + calculateProfit(f), 0).toFixed(0)}`,
+                20,
+                80,
+              );
+              pdf.save("farm-tracker-report.pdf");
+              showToast("PDF exported!", "success");
+            } catch (e) {
+              showToast("PDF export failed: " + e.message, "error");
+            }
+          });
+
+        // Email Report
+        document
+          .getElementById("emailReportBtn")
+          .addEventListener("click", function () {
+            const subject = encodeURIComponent("Farming & Life Tracker Report");
+            const body = encodeURIComponent(
+              `Report ${new Date().toLocaleDateString()}\n\n` +
+                `Balance: ${getCurrency()}${getBalance()}\n` +
+                `Total Harvest: ${data.farm.reduce((s, f) => s + (f.harvest || 0), 0)} kg\n` +
+                `Goals: ${data.goals.filter((g) => g.done).length}/${data.goals.length}\n` +
+                `Farm Profit: ${getCurrency()}${data.farm.reduce((s, f) => s + calculateProfit(f), 0).toFixed(0)}`,
+            );
+            window.location.href = `mailto:?subject=${subject}&body=${body}`;
+          });
+
+        // Camera
+        let cameraStream = null;
+        document
+          .getElementById("openCameraBtn")
+          .addEventListener("click", async function () {
+            try {
+              cameraStream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: "environment" },
+              });
+              const video = document.getElementById("cameraPreview");
+              video.srcObject = cameraStream;
+              video.style.display = "block";
+              document.getElementById("takePhotoBtn").style.display =
+                "inline-flex";
+              this.style.display = "none";
+            } catch (e) {
+              showToast("Camera access denied", "error");
+            }
+          });
+
+        document
+          .getElementById("takePhotoBtn")
+          .addEventListener("click", function () {
+            const video = document.getElementById("cameraPreview");
+            const canvas = document.getElementById("cameraCanvas");
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext("2d").drawImage(video, 0, 0);
+            const dataUrl = canvas.toDataURL("image/jpeg");
+            data.photos.push(dataUrl);
+            saveData();
+            showToast("📸 Photo captured!", "success");
+          });
+
+        // Voice Notes
+        let mediaRecorder = null;
+        let audioChunks = [];
+
+        document
+          .getElementById("recordBtn")
+          .addEventListener("click", async function () {
+            try {
+              const stream = await navigator.mediaDevices.getUserMedia({
+                audio: true,
+              });
+              mediaRecorder = new MediaRecorder(stream);
+              audioChunks = [];
+
+              mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
+              mediaRecorder.onstop = () => {
+                const blob = new Blob(audioChunks, { type: "audio/webm" });
+                const reader = new FileReader();
+                reader.onload = () => {
+                  data.voiceNotes.push(reader.result);
+                  saveData();
+                  showToast("🎤 Voice note saved!", "success");
+                };
+                reader.readAsDataURL(blob);
+              };
+
+              mediaRecorder.start();
+              this.classList.add("recording");
+              document.getElementById("voiceStatus").innerText =
+                "🔴 Recording...";
+              document.getElementById("stopRecordBtn").style.display =
+                "inline-flex";
+            } catch (e) {
+              showToast("Microphone access denied", "error");
+            }
+          });
+
+        document
+          .getElementById("stopRecordBtn")
+          .addEventListener("click", function () {
+            if (mediaRecorder && mediaRecorder.state !== "inactive") {
+              mediaRecorder.stop();
+              mediaRecorder.stream.getTracks().forEach((t) => t.stop());
+              document
+                .getElementById("recordBtn")
+                .classList.remove("recording");
+              document.getElementById("voiceStatus").innerText =
+                "⏹️ Press to record";
+              this.style.display = "none";
+            }
+          });
+
+        // Media tabs
+        document.querySelectorAll(".media-tabs button").forEach((btn) => {
+          btn.addEventListener("click", function () {
+            document
+              .querySelectorAll(".media-tabs button")
+              .forEach((b) => b.classList.remove("active"));
+            this.classList.add("active");
+            const media = this.dataset.media;
+            document
+              .querySelectorAll(".media-panel")
+              .forEach((p) => (p.style.display = "none"));
+            const target = document.getElementById(
+              "media" + media.charAt(0).toUpperCase() + media.slice(1),
+            );
+            if (target) target.style.display = "block";
+          });
+        });
+
+        // Document upload
+        document
+          .getElementById("docUpload")
+          .addEventListener("change", function (e) {
+            const file = e.target.files[0];
+            if (file) {
+              const reader = new FileReader();
+              reader.onload = function (ev) {
+                data.documents.push(ev.target.result);
+                saveData();
+                showToast("📄 Document scanned!", "success");
+              };
+              reader.readAsDataURL(file);
+            }
+            this.value = "";
+          });
+
+        // Keyboard shortcuts
+        document.addEventListener("keydown", function (e) {
+          if (e.key === "?" && !e.target.matches("input, textarea")) {
+            alert(
+              "⌨️ Keyboard Shortcuts:\n\n" +
+                "1 - Dashboard\n" +
+                "2 - Farm\n" +
+                "3 - Daily\n" +
+                "4 - Money\n" +
+                "5 - Goals\n" +
+                "6 - Reports\n" +
+                "7 - Profile\n" +
+                "D - Toggle dark mode\n" +
+                "E - Export data\n" +
+                "? - Show this help",
+            );
+          }
+          if (e.target.matches("input, textarea")) return;
+          const pages = [
+            "dashboard",
+            "farm",
+            "daily",
+            "money",
+            "goals",
+            "reports",
+            "profile",
+          ];
+          const num = parseInt(e.key);
+          if (num >= 1 && num <= 7) {
+            const page = pages[num - 1];
+            document
+              .querySelectorAll(".nav-tabs button")
+              .forEach((b) => b.classList.remove("active"));
+            const targetBtn = document.querySelector(
+              `.nav-tabs button[data-page="${page}"]`,
+            );
+            if (targetBtn) targetBtn.classList.add("active");
+            document
+              .querySelectorAll(".page")
+              .forEach((p) => p.classList.remove("active"));
+            const targetPage = document.getElementById("page-" + page);
+            if (targetPage) targetPage.classList.add("active");
+          }
+          if (e.key === "d" || e.key === "D")
+            document.getElementById("themeToggle").click();
+          if (e.key === "e" || e.key === "E")
+            document.getElementById("exportDataBtn").click();
+        });
+
+        // Initialize reminders
+        if (data.reminders.length === 0) {
+          data.reminders.push({ text: "🌾 Water crops", date: "today" });
+          data.reminders.push({ text: "💰 Check savings", date: "tomorrow" });
+          data.reminders.push({
+            text: "📊 Review weekly report",
+            date: "this week",
+          });
+          saveData();
+        }
+
+        console.log("✅ App initialized successfully!");
+        showToast("🌾 Welcome to Farming & Life Tracker!", "success");
+      });
+
+      // Service worker (optional)
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("sw.js").catch(function () {});
       }
-      this.value = '';
-    });
 
-    document.addEventListener('keydown', function(e) {
-      if (e.key === '?' && !e.target.matches('input, textarea')) {
-        alert('Keyboard Shortcuts:\n\n1 - Dashboard\n2 - Farm\n3 - Daily\n4 - Money\n5 - Goals\n6 - Reports\n7 - Profile\nD - Toggle dark mode\nE - Export data\nCtrl+S - Save (trigger render)');
-      }
-      if (e.target.matches('input, textarea')) return;
-      if (e.key === '1') showPage('dashboard');
-      if (e.key === '2') showPage('farm');
-      if (e.key === '3') showPage('daily');
-      if (e.key === '4') showPage('money');
-      if (e.key === '5') showPage('goals');
-      if (e.key === '6') showPage('reports');
-      if (e.key === '7') showPage('profile');
-      if (e.key === 'd' || e.key === 'D') document.getElementById('themeToggle').click();
-      if (e.key === 'e' || e.key === 'E') document.getElementById('exportDataBtn').click();
-    });
-
-    function showPage(page) {
-      document.querySelectorAll('.nav-tabs button').forEach(function(b) { b.classList.remove('active'); });
-      document.querySelector('.nav-tabs button[data-page="' + page + '"]').classList.add('active');
-      document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
-      document.getElementById('page-' + page).classList.add('active');
-    }
-  });
-})();
-
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(function() {});
-}
-</script>
-</body>
+      console.log("🚀 Farming & Life Tracker ready!");
+    </script>
+  </body>
 </html>
