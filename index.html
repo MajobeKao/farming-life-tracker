@@ -822,6 +822,9 @@
           accept=".json"
           style="display: none"
         />
+        <button class="primary" id="installAppBtn" style="display:none;font-size:0.8rem;">
+          <i class="fas fa-download"></i> Install App
+        </button>
       </div>
       <div class="nav-tabs">
         <button class="active" data-page="dashboard">
@@ -3065,6 +3068,34 @@
       }
 
       console.log("🚀 Farming & Life Tracker ready!");
+
+    // PWA Installation Prompt
+    var deferredPrompt;
+
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault();
+      deferredPrompt = e;
+      var installBtn = document.getElementById('installAppBtn');
+      if (installBtn) {
+        installBtn.style.display = 'flex';
+        installBtn.addEventListener('click', function() {
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.then(function(choiceResult) {
+            if (choiceResult.outcome === 'accepted') {
+              console.log('User accepted the install prompt');
+              installBtn.style.display = 'none';
+            } else {
+              console.log('User dismissed the install prompt');
+            }
+            deferredPrompt = null;
+          });
+        });
+      }
+    });
+
+    window.addEventListener('appinstalled', function() {
+      console.log('App installed successfully!');
+    });
     </script>
   </body>
 </html>
