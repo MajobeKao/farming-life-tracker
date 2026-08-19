@@ -39,6 +39,23 @@
     .photo-grid img { width: 70px; height: 70px; object-fit: cover; border-radius: 16px; border: 2px solid #e0e9f2; }
     hr { border: none; border-top: 1px solid #e4ecf5; margin: 1.2rem 0; }
     .row-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    .profit { color: #2b7a4b; font-weight: 600; }
+    .loss { color: #c0392b; font-weight: 600; }
+    .category-vegetables { border-left-color: #27ae60; }
+    .category-grains { border-left-color: #f39c12; }
+    .category-fruits { border-left-color: #9b59b6; }
+    .category-other { border-left-color: #3498db; }
+    .crop-category { padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; text-transform: uppercase; }
+    .crop-category.vegetables { background: #d5f5e3; color: #1e8449; }
+    .crop-category.grains { background: #fdebd0; color: #b9770e; }
+    .crop-category.fruits { background: #ebdef0; color: #7d3c98; }
+    .crop-category.other { background: #d6eaf8; color: #2471a3; }
+    .input-group { display: flex; flex-direction: column; gap: 4px; }
+    .input-group label { font-size: 0.75rem; color: #5a6e7e; font-weight: 500; }
+    .farm-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+    .farm-stat { background: #f8fafc; padding: 0.8rem; border-radius: 16px; text-align: center; }
+    .farm-stat .label { font-size: 0.7rem; color: #5a6e7e; text-transform: uppercase; }
+    .farm-stat .val { font-size: 1.2rem; font-weight: 600; color: #1e2a3a; }
     @media (max-width: 700px) { .row-2col { grid-template-columns: 1fr; } .app-header { flex-direction: column; align-items: stretch; gap: 1rem; } .nav-tabs { justify-content: center; } }
   </style>
 </head>
@@ -66,17 +83,77 @@
 </div>
 
 <div id="page-farm" class="page">
+  <div class="farm-stats" id="farmStats"></div>
   <div class="card-panel">
     <h2><i class="fas fa-plus-circle"></i> Add farm activity</h2>
+    <div class="flex-row" style="margin-bottom: 1rem;">
+      <div class="input-group">
+        <label>Crop Name</label>
+        <input type="text" id="farmCrop" placeholder="Crop name" value="Wheat">
+      </div>
+      <div class="input-group">
+        <label>Category</label>
+        <select id="farmCategory">
+          <option value="grains">Grains</option>
+          <option value="vegetables">Vegetables</option>
+          <option value="fruits">Fruits</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>Field / Location</label>
+        <input type="text" id="farmField" placeholder="Field / location" value="North">
+      </div>
+    </div>
+    <div class="flex-row" style="margin-bottom: 1rem;">
+      <div class="input-group">
+        <label>Field Size (m²)</label>
+        <input type="number" id="farmSize" placeholder="m²" value="100">
+      </div>
+      <div class="input-group">
+        <label>Season</label>
+        <select id="farmSeason">
+          <option value="spring">Spring</option>
+          <option value="summer">Summer</option>
+          <option value="autumn">Autumn</option>
+          <option value="winter">Winter</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>Planting Date</label>
+        <input type="date" id="farmPlantDate">
+      </div>
+    </div>
+    <div class="flex-row" style="margin-bottom: 1rem;">
+      <div class="input-group">
+        <label>Cost ($)</label>
+        <input type="number" id="farmCost" placeholder="Cost $" value="120">
+      </div>
+      <div class="input-group">
+        <label>Selling Price ($/kg)</label>
+        <input type="number" id="farmPrice" placeholder="$/kg" value="0.5">
+      </div>
+      <div class="input-group">
+        <label>Harvest (kg)</label>
+        <input type="number" id="farmHarvest" placeholder="Harvest (kg)" value="340">
+      </div>
+    </div>
     <div class="flex-row">
-      <input type="text" id="farmCrop" placeholder="Crop name" value="Wheat">
-      <input type="text" id="farmField" placeholder="Field / location" value="North">
-      <input type="number" id="farmCost" placeholder="Cost $" value="120">
-      <input type="number" id="farmHarvest" placeholder="Harvest (kg)" value="340">
-      <button class="primary" id="addFarmBtn"><i class="fas fa-save"></i> Log</button>
+      <div class="input-group">
+        <label>Fertilizer Cost ($)</label>
+        <input type="number" id="farmFertilizer" placeholder="$" value="0">
+      </div>
+      <div class="input-group">
+        <label>Pesticide Cost ($)</label>
+        <input type="number" id="farmPesticide" placeholder="$" value="0">
+      </div>
+      <div class="input-group" style="justify-content: flex-end;">
+        <button class="primary" id="addFarmBtn"><i class="fas fa-save"></i> Log</button>
+      </div>
     </div>
   </div>
   <div class="card-panel"><h2><i class="fas fa-list"></i> Farm log</h2><div id="farmList"></div></div>
+  <div class="card-panel"><h2><i class="fas fa-chart-line"></i> Profit/Loss by Crop</h2><div id="farmProfitList"></div></div>
 </div>
 
 <div id="page-daily" class="page">
@@ -174,8 +251,20 @@
     return bal;
   }
 
+  function calculateProfit(farm) {
+    const revenue = (farm.harvest || 0) * (farm.price || 0);
+    const totalCost = (farm.cost || 0) + (farm.fertilizer || 0) + (farm.pesticide || 0);
+    return revenue - totalCost;
+  }
+
+  function calculateYieldPerSqm(farm) {
+    if (!farm.size || farm.size <= 0) return 0;
+    return (farm.harvest || 0) / farm.size;
+  }
+
   function renderDashboard() {
     const farmTotal = data.farm.reduce((s, f) => s + (f.harvest || 0), 0);
+    const totalProfit = data.farm.reduce((s, f) => s + calculateProfit(f), 0);
     const goalDone = data.goals.filter(g => g.done).length;
     const totalGoals = data.goals.length || 1;
     const balance = getBalance();
@@ -183,9 +272,9 @@
       <div class="stat-card"><i class="fas fa-seedling"></i><div><h4>Harvest</h4><div class="value">${farmTotal} kg</div></div></div>
       <div class="stat-card"><i class="fas fa-wallet"></i><div><h4>Balance</h4><div class="value">$${balance}</div></div></div>
       <div class="stat-card"><i class="fas fa-bullseye"></i><div><h4>Goals done</h4><div class="value">${goalDone}/${totalGoals}</div></div></div>
-      <div class="stat-card"><i class="fas fa-clock"></i><div><h4>Today activity</h4><div class="value">${data.daily.length}</div></div></div>`;
+      <div class="stat-card"><i class="fas fa-chart-line"></i><div><h4>Farm Profit</h4><div class="value ${totalProfit >= 0 ? 'profit' : 'loss'}">$${totalProfit.toFixed(0)}</div></div></div>`;
     const recent = [...data.farm].slice(-3).reverse();
-    document.getElementById('dashFarm').innerHTML = recent.length ? recent.map(f => `<div class="list-item">${f.crop} · ${f.field} · harvest ${f.harvest}kg · $${f.cost}</div>`).join('') : '<div class="small-note">No farm entries</div>';
+    document.getElementById('dashFarm').innerHTML = recent.length ? recent.map(f => `<div class="list-item category-${f.category || 'other'}"><span><strong>${f.crop}</strong> <span class="crop-category ${f.category || 'other'}">${f.category || 'other'}</span> · ${f.field} · ${f.harvest}kg</span> <span>${calculateProfit(f) >= 0 ? '+' : ''}$${calculateProfit(f).toFixed(0)}</span></div>`).join('') : '<div class="small-note">No farm entries</div>';
     const goals = data.goals.slice(0, 4);
     document.getElementById('dashGoals').innerHTML = goals.length ? goals.map(g => `<div class="list-item">${g.title} ${g.done ? '✅' : '⏳'} (${g.period})</div>`).join('') : '<div class="small-note">No goals yet</div>';
     const rems = data.reminders.slice(-3).reverse();
@@ -193,8 +282,53 @@
   }
 
   function renderFarm() {
+    const totalCost = data.farm.reduce((s, f) => s + (f.cost || 0) + (f.fertilizer || 0) + (f.pesticide || 0), 0);
+    const totalRevenue = data.farm.reduce((s, f) => s + (f.harvest || 0) * (f.price || 0), 0);
+    const totalProfit = data.farm.reduce((s, f) => s + calculateProfit(f), 0);
+    const avgYield = data.farm.length ? data.farm.reduce((s, f) => s + calculateYieldPerSqm(f), 0) / data.farm.length : 0;
+
+    document.getElementById('farmStats').innerHTML = `
+      <div class="farm-stat"><div class="label">Total Cost</div><div class="val">$${totalCost.toFixed(0)}</div></div>
+      <div class="farm-stat"><div class="label">Total Revenue</div><div class="val">$${totalRevenue.toFixed(0)}</div></div>
+      <div class="farm-stat"><div class="label">Total Profit</div><div class="val ${totalProfit >= 0 ? 'profit' : 'loss'}">$${totalProfit.toFixed(0)}</div></div>
+      <div class="farm-stat"><div class="label">Avg Yield/m²</div><div class="val">${avgYield.toFixed(2)} kg</div></div>
+    `;
+
     const list = document.getElementById('farmList');
-    list.innerHTML = data.farm.length ? data.farm.map((f, i) => `<div class="list-item"><span><strong>${f.crop}</strong> · ${f.field} · harvest ${f.harvest}kg · cost $${f.cost}</span> <button class="outline" onclick="deleteFarm(${i})"><i class="fas fa-trash"></i></button></div>`).join('') : '<div class="small-note">No farm entries</div>';
+    list.innerHTML = data.farm.length ? data.farm.map((f, i) => {
+      const profit = calculateProfit(f);
+      const yieldPerSqm = calculateYieldPerSqm(f);
+      return `<div class="list-item category-${f.category || 'other'}">
+        <div>
+          <strong>${f.crop}</strong> <span class="crop-category ${f.category || 'other'}">${f.category || 'other'}</span><br>
+          <span class="small-note">${f.field} · ${f.size || '?'}m² · ${f.season || 'N/A'} · ${f.plantDate || 'No date'}</span><br>
+          <span class="small-note">Yield: ${yieldPerSqm.toFixed(2)} kg/m² · Fertilizer: $${f.fertilizer || 0} · Pesticide: $${f.pesticide || 0}</span>
+        </div>
+        <div style="text-align:right;">
+          <div>Harvest: ${f.harvest || 0}kg</div>
+          <div class="${profit >= 0 ? 'profit' : 'loss'}">${profit >= 0 ? '+' : ''}$${profit.toFixed(0)}</div>
+          <button class="outline" onclick="deleteFarm(${i})"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>`;
+    }).join('') : '<div class="small-note">No farm entries</div>';
+
+    const cropProfits = {};
+    data.farm.forEach(f => {
+      const name = f.crop || 'Unknown';
+      if (!cropProfits[name]) cropProfits[name] = { profit: 0, harvest: 0, cost: 0 };
+      cropProfits[name].profit += calculateProfit(f);
+      cropProfits[name].harvest += f.harvest || 0;
+      cropProfits[name].cost += (f.cost || 0) + (f.fertilizer || 0) + (f.pesticide || 0);
+    });
+
+    const profitList = document.getElementById('farmProfitList');
+    const sortedCrops = Object.entries(cropProfits).sort((a, b) => b[1].profit - a[1].profit);
+    profitList.innerHTML = sortedCrops.length ? sortedCrops.map(([crop, stats]) => `
+      <div class="list-item">
+        <div><strong>${crop}</strong><br><span class="small-note">Harvest: ${stats.harvest}kg · Cost: $${stats.cost}</span></div>
+        <div class="${stats.profit >= 0 ? 'profit' : 'loss'}" style="font-size:1.2rem;">${stats.profit >= 0 ? '+' : ''}$${stats.profit.toFixed(0)}</div>
+      </div>
+    `).join('') : '<div class="small-note">No crop data</div>';
   }
   window.deleteFarm = function(idx) { data.farm.splice(idx, 1); saveData(); };
 
@@ -234,6 +368,7 @@
 
   document.addEventListener('DOMContentLoaded', function() {
     loadData(); renderAll();
+      document.getElementById('farmPlantDate').valueAsDate = new Date();
 
     document.querySelectorAll('.nav-tabs button').forEach(btn => {
       btn.addEventListener('click', function() {
@@ -247,10 +382,17 @@
 
     document.getElementById('addFarmBtn').addEventListener('click', function() {
       const crop = document.getElementById('farmCrop').value.trim() || 'unknown';
+      const category = document.getElementById('farmCategory').value;
       const field = document.getElementById('farmField').value.trim() || 'field';
+      const size = parseFloat(document.getElementById('farmSize').value) || 0;
+      const season = document.getElementById('farmSeason').value;
+      const plantDate = document.getElementById('farmPlantDate').value;
       const cost = parseFloat(document.getElementById('farmCost').value) || 0;
+      const price = parseFloat(document.getElementById('farmPrice').value) || 0;
       const harvest = parseFloat(document.getElementById('farmHarvest').value) || 0;
-      data.farm.push({ crop, field, cost, harvest, date: new Date().toISOString() });
+      const fertilizer = parseFloat(document.getElementById('farmFertilizer').value) || 0;
+      const pesticide = parseFloat(document.getElementById('farmPesticide').value) || 0;
+      data.farm.push({ crop, category, field, size, season, plantDate, cost, price, harvest, fertilizer, pesticide, date: new Date().toISOString() });
       saveData();
     });
 
