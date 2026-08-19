@@ -4,9 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>🌾 Life & Farm Tracker</title>
-  <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#1f6e3f">
-  <meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -1425,10 +1423,10 @@
     });
 
     function showPage(page) {
-      document.querySelectorAll('.nav-tabs button').forEach(b => b.classList.remove('active'));
-      document.querySelector(`.nav-tabs button[data-page="${page}"]`)?.classList.add('active');
-      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      document.getElementById('page-' + page)?.classList.add('active');
+      document.querySelectorAll('.nav-tabs button').forEach(function(b) { b.classList.remove('active'); });
+      document.querySelector('.nav-tabs button[data-page="' + page + '"]').classList.add('active');
+      document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+      document.getElementById('page-' + page).classList.add('active');
     }
   });
   } catch(e) { console.error('Script error:', e); alert('Error: ' + e.message); }
