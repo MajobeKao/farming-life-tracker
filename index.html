@@ -203,6 +203,7 @@
   </style>
 </head>
 <body>
+<div class="notification-panel" id="notificationPanel"></div>
 <div class="app-header">
   <h1><i class="fas fa-leaf"></i> Life & Farm</h1>
   <div class="settings-bar">
@@ -640,7 +641,8 @@
 </div>
 
 <script>
-(function(){
+  console.log('Script starting...');
+  try {
   let data = { farm: [], daily: [], habits: [], money: [], goals: [], reminders: [], notes: [], photos: [], profileName: 'Farmer Joe', moods: [], meals: [], journals: [], habitStreaks: {}, water: [], savingsGoals: [], recurringExpenses: [], expenses: [], currency: '$', voiceNotes: [], documents: [], notifSettings: { daily: true, goals: true, habits: true, browser: false } };
 
   function getCurrency() { return data.currency || '$'; }
@@ -980,14 +982,14 @@
     loadData(); renderAll();
       document.getElementById('farmPlantDate').valueAsDate = new Date();
 
-    document.querySelectorAll('.nav-tabs button').forEach(btn => {
-      btn.addEventListener('click', function() {
-        document.querySelectorAll('.nav-tabs button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.nav-tabs button').forEach(function(btn) {
+      btn.onclick = function() {
+        var page = this.getAttribute('data-page');
+        document.querySelectorAll('.nav-tabs button').forEach(function(b) { b.classList.remove('active'); });
         this.classList.add('active');
-        const page = this.dataset.page;
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
         document.getElementById('page-' + page).classList.add('active');
-      });
+      };
     });
 
     document.getElementById('addFarmBtn').addEventListener('click', function() {
@@ -1429,10 +1431,11 @@
       document.getElementById('page-' + page)?.classList.add('active');
     }
   });
+  } catch(e) { console.error('Script error:', e); alert('Error: ' + e.message); }
 })();
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(() => {});
+  navigator.serviceWorker.register('sw.js').catch(function() {});
 }
 </script>
 </body>
