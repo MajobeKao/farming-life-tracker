@@ -83,6 +83,29 @@
     .spending-bar .tooltip { display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; white-space: nowrap; }
     .spending-bar:hover .tooltip { display: block; }
     .currency-select { background: white; border: 1px solid #dbe2ea; padding: 0.4rem 1rem; border-radius: 30px; font-size: 0.9rem; }
+    .priority-high { border-left-color: #e74c3c; }
+    .priority-medium { border-left-color: #f39c12; }
+    .priority-low { border-left-color: #3498db; }
+    .priority-badge { padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
+    .priority-badge.high { background: #fadbd8; color: #c0392b; }
+    .priority-badge.medium { background: #fdebd0; color: #b9770e; }
+    .priority-badge.low { background: #d6eaf8; color: #2471a3; }
+    .goal-category { padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; margin-left: 0.5rem; }
+    .goal-category.personal { background: #d5f5e3; color: #1e8449; }
+    .goal-category.work { background: #ebdef0; color: #7d3c98; }
+    .goal-category.health { background: #fdebd0; color: #b9770e; }
+    .deadline-badge { background: #e74c3c; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; margin-left: 0.5rem; }
+    .deadline-badge.overdue { background: #c0392b; animation: pulse 1s infinite; }
+    .deadline-badge.soon { background: #f39c12; }
+    .deadline-badge.ok { background: #27ae60; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+    .subtask-list { margin-left: 1.5rem; margin-top: 0.5rem; }
+    .subtask-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0; font-size: 0.9rem; }
+    .subtask-item input[type="checkbox"] { width: 16px; height: 16px; }
+    .subtask-item.completed { text-decoration: line-through; opacity: 0.6; }
+    .progress-bar { background: #e8f5e9; border-radius: 10px; height: 12px; width: 100%; overflow: hidden; margin: 0.5rem 0; }
+    .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #27ae60, #2ecc71); transition: width 0.3s; }
+    .goal-actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
     @media (max-width: 700px) { .row-2col { grid-template-columns: 1fr; } .app-header { flex-direction: column; align-items: stretch; gap: 1rem; } .nav-tabs { justify-content: center; } }
   </style>
 </head>
@@ -329,14 +352,83 @@
 </div>
 
 <div id="page-goals" class="page">
-  <div class="card-panel"><h2><i class="fas fa-flag"></i> Add goal</h2>
-    <div class="flex-row">
-      <input type="text" id="goalTitle" placeholder="Goal" value="Harvest 500kg">
-      <select id="goalPeriod"><option value="daily">Daily</option><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select>
-      <input type="number" id="goalTarget" placeholder="Target" value="500">
-      <button class="primary" id="addGoalBtn"><i class="fas fa-plus"></i> Add</button>
+  <div class="card-panel">
+    <h2><i class="fas fa-flag"></i> Add New Goal</h2>
+    <div class="flex-row" style="margin-bottom: 1rem;">
+      <div class="input-group">
+        <label>Goal Title</label>
+        <input type="text" id="goalTitle" placeholder="Goal" value="Harvest 500kg">
+      </div>
+      <div class="input-group">
+        <label>Category</label>
+        <select id="goalCategory">
+          <option value="personal">Personal</option>
+          <option value="work">Work</option>
+          <option value="health">Health</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>Priority</label>
+        <select id="goalPriority">
+          <option value="high">High</option>
+          <option value="medium" selected>Medium</option>
+          <option value="low">Low</option>
+        </select>
+      </div>
     </div>
-    <div id="goalList" style="margin-top: 1.2rem;"></div>
+    <div class="flex-row" style="margin-bottom: 1rem;">
+      <div class="input-group">
+        <label>Period</label>
+        <select id="goalPeriod">
+          <option value="daily">Daily</option>
+          <option value="monthly" selected>Monthly</option>
+          <option value="yearly">Yearly</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>Target</label>
+        <input type="number" id="goalTarget" placeholder="Target" value="500">
+      </div>
+      <div class="input-group">
+        <label>Current Progress</label>
+        <input type="number" id="goalCurrent" placeholder="Current" value="0">
+      </div>
+      <div class="input-group">
+        <label>Deadline</label>
+        <input type="date" id="goalDeadline">
+      </div>
+    </div>
+    <div class="flex-row">
+      <div class="input-group" style="flex:1;">
+        <label>Subtasks (comma separated)</label>
+        <input type="text" id="goalSubtasks" placeholder="Task 1, Task 2, Task 3">
+      </div>
+      <div class="input-group" style="justify-content: flex-end;">
+        <button class="primary" id="addGoalBtn"><i class="fas fa-plus"></i> Add Goal</button>
+      </div>
+    </div>
+  </div>
+  <div class="card-panel">
+    <h2><i class="fas fa-tasks"></i> Your Goals</h2>
+    <div class="flex-row" style="margin-bottom: 1rem;">
+      <select id="filterGoalCategory">
+        <option value="all">All Categories</option>
+        <option value="personal">Personal</option>
+        <option value="work">Work</option>
+        <option value="health">Health</option>
+      </select>
+      <select id="filterGoalPriority">
+        <option value="all">All Priorities</option>
+        <option value="high">High</option>
+        <option value="medium">Medium</option>
+        <option value="low">Low</option>
+      </select>
+    </div>
+    <div id="goalList"></div>
+  </div>
+  <div class="card-panel">
+    <h2><i class="fas fa-clock"></i> Upcoming Deadlines</h2>
+    <div id="goalDeadlines"></div>
   </div>
 </div>
 
@@ -572,11 +664,72 @@
   window.deleteRecurring = function(idx) { data.recurringExpenses.splice(idx,1); saveData(); };
 
   function renderGoals() {
+    const filterCat = document.getElementById('filterGoalCategory')?.value || 'all';
+    const filterPri = document.getElementById('filterGoalPriority')?.value || 'all';
+    let filtered = data.goals;
+    if (filterCat !== 'all') filtered = filtered.filter(g => g.category === filterCat);
+    if (filterPri !== 'all') filtered = filtered.filter(g => g.priority === filterPri);
+
     const list = document.getElementById('goalList');
-    list.innerHTML = data.goals.map((g, i) => `<div class="list-item"><span>${g.title} (${g.period}) target: ${g.target} ${g.done ? '✅' : ''}</span> <div><button class="outline" onclick="toggleGoal(${i})">${g.done ? 'Undo' : 'Done'}</button> <button class="outline" onclick="deleteGoal(${i})"><i class="fas fa-trash"></i></button></div></div>`).join('');
+    list.innerHTML = filtered.length ? filtered.map((g, i) => {
+      const realIdx = data.goals.indexOf(g);
+      const pct = g.target > 0 ? Math.min((g.current / g.target) * 100, 100) : 0;
+      const deadlineClass = getDeadlineClass(g.deadline);
+      const subtasks = g.subtasks || [];
+      const completedSubs = subtasks.filter(s => s.done).length;
+      return `<div class="list-item priority-${g.priority || 'medium'}">
+        <div style="flex:1">
+          <div>
+            <strong>${g.title}</strong>
+            <span class="priority-badge ${g.priority || 'medium'}">${g.priority || 'medium'}</span>
+            <span class="goal-category ${g.category || 'personal'}">${g.category || 'personal'}</span>
+            ${g.deadline ? `<span class="deadline-badge ${deadlineClass}">${g.deadline}</span>` : ''}
+          </div>
+          <div class="small-note">${g.period} · ${g.current || 0} / ${g.target} (${pct.toFixed(0)}%)</div>
+          <div class="progress-bar"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+          ${subtasks.length ? `<div class="subtask-list">${subtasks.map((s, si) => `<div class="subtask-item ${s.done ? 'completed' : ''}"><input type="checkbox" ${s.done ? 'checked' : ''} onchange="toggleSubtask(${realIdx},${si})"> ${s.text}</div>`).join('')}</div>` : ''}
+          <div class="goal-actions">
+            <button class="outline" onclick="updateGoalProgress(${realIdx}, 10)">+10%</button>
+            <button class="outline" onclick="updateGoalProgress(${realIdx}, 25)">+25%</button>
+            <button class="outline" onclick="toggleGoal(${realIdx})">${g.done ? 'Undo' : 'Done'}</button>
+            <button class="outline" onclick="deleteGoal(${realIdx})"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      </div>`;
+    }).join('') : '<div class="small-note">No goals yet</div>';
+
+    const deadlinesDiv = document.getElementById('goalDeadlines');
+    const upcoming = data.goals.filter(g => g.deadline && !g.done).sort((a, b) => new Date(a.deadline) - new Date(b.deadline)).slice(0, 5);
+    deadlinesDiv.innerHTML = upcoming.length ? upcoming.map(g => {
+      const cls = getDeadlineClass(g.deadline);
+      return `<div class="list-item"><span><strong>${g.title}</strong> <span class="goal-category ${g.category}">${g.category}</span></span> <span class="deadline-badge ${cls}">${g.deadline}</span></div>`;
+    }).join('') : '<div class="small-note">No upcoming deadlines</div>';
   }
+
+  function getDeadlineClass(deadline) {
+    if (!deadline) return '';
+    const today = new Date().toISOString().split('T')[0];
+    const d = new Date(deadline);
+    const t = new Date(today);
+    const diff = (d - t) / (1000 * 60 * 60 * 24);
+    if (diff < 0) return 'overdue';
+    if (diff <= 3) return 'soon';
+    return 'ok';
+  }
+
   window.toggleGoal = function(idx) { data.goals[idx].done = !data.goals[idx].done; saveData(); };
   window.deleteGoal = function(idx) { data.goals.splice(idx,1); saveData(); };
+  window.updateGoalProgress = function(idx, amount) {
+    const g = data.goals[idx];
+    const newPct = Math.min(((g.current || 0) / g.target) * 100 + amount, 100);
+    g.current = Math.round((newPct / 100) * g.target);
+    saveData();
+  };
+  window.toggleSubtask = function(goalIdx, subIdx) {
+    const subtasks = data.goals[goalIdx].subtasks || [];
+    if (subtasks[subIdx]) subtasks[subIdx].done = !subtasks[subIdx].done;
+    saveData();
+  };
 
   function renderProfile() {
     document.getElementById('profileName').value = data.profileName || '';
@@ -727,11 +880,23 @@
 
     document.getElementById('addGoalBtn').addEventListener('click', function() {
       const title = document.getElementById('goalTitle').value.trim() || 'goal';
+      const category = document.getElementById('goalCategory').value;
+      const priority = document.getElementById('goalPriority').value;
       const period = document.getElementById('goalPeriod').value;
       const target = parseFloat(document.getElementById('goalTarget').value) || 0;
-      data.goals.push({ title, period, target, done: false });
+      const current = parseFloat(document.getElementById('goalCurrent').value) || 0;
+      const deadline = document.getElementById('goalDeadline').value;
+      const subtasksStr = document.getElementById('goalSubtasks').value.trim();
+      const subtasks = subtasksStr ? subtasksStr.split(',').map(s => ({ text: s.trim(), done: false })) : [];
+      data.goals.push({ title, category, priority, period, target, current, deadline, subtasks, done: false });
+      document.getElementById('goalTitle').value = '';
+      document.getElementById('goalSubtasks').value = '';
+      document.getElementById('goalCurrent').value = '0';
       saveData();
     });
+
+    document.getElementById('filterGoalCategory').addEventListener('change', renderGoals);
+    document.getElementById('filterGoalPriority').addEventListener('change', renderGoals);
 
     document.getElementById('reportDailyBtn').addEventListener('click', function() {
       document.getElementById('reportContent').innerHTML = `<strong>Daily report</strong><br>Farm entries: ${data.farm.length} · Balance: $${getBalance()} · Goals done: ${data.goals.filter(g=>g.done).length}`;
