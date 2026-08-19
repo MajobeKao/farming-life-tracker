@@ -1,0 +1,12 @@
+{
+  "name": "farming-life-tracker",
+  "version": "1.0.0",
+  "description": "Offline farming and life tracker",
+  "main": "index.html",
+  "scripts": {
+    "start": "open index.html"
+  },
+  "keywords": ["farming", "tracker", "offline", "life"],
+  "author": "Your Name",
+  "license": "MIT"
+}

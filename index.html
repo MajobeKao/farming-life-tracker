@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🌾 Life & Farm Tracker</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, system-ui, sans-serif; }
+    body { background: #f4f7fb; color: #1e2a3a; padding: 1rem; max-width: 1400px; margin: 0 auto; }
+    .app-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 1.5rem; background: white; padding: 1rem 1.5rem; border-radius: 30px; box-shadow: 0 8px 20px rgba(0,0,0,0.03); }
+    .app-header h1 { font-weight: 600; font-size: 1.8rem; letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px; }
+    .app-header h1 i { color: #2b7a4b; }
+    .nav-tabs { display: flex; flex-wrap: wrap; gap: 0.3rem; background: #f0f4fa; padding: 0.3rem; border-radius: 40px; }
+    .nav-tabs button { background: transparent; border: none; padding: 0.5rem 1.1rem; border-radius: 30px; font-weight: 500; color: #2c3e50; transition: 0.2s; cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; gap: 6px; }
+    .nav-tabs button i { font-size: 1rem; }
+    .nav-tabs button.active { background: white; box-shadow: 0 4px 10px rgba(0,0,0,0.04); color: #1f6e3f; }
+    .nav-tabs button:hover { background: white; }
+    .page { display: none; margin-top: 1.2rem; }
+    .page.active { display: block; }
+    .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1.2rem; margin-bottom: 2rem; }
+    .stat-card { background: white; padding: 1.2rem 1rem; border-radius: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); border: 1px solid #eef3f8; transition: 0.2s; display: flex; align-items: center; gap: 12px; }
+    .stat-card i { font-size: 2rem; width: 3rem; height: 3rem; display: flex; align-items: center; justify-content: center; background: #e9f3ed; border-radius: 18px; color: #1f6e3f; }
+    .stat-card div { flex: 1; }
+    .stat-card h4 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: #5a6e7e; }
+    .stat-card .value { font-size: 1.5rem; font-weight: 600; }
+    .card-panel { background: white; border-radius: 28px; padding: 1.5rem 1.8rem; margin-bottom: 1.5rem; box-shadow: 0 4px 16px rgba(0,0,0,0.02); border: 1px solid #eef3f8; }
+    .card-panel h2 { font-weight: 500; font-size: 1.3rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 10px; color: #1e2a3a; }
+    .flex-row { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; }
+    input, textarea, select { background: #f9fcff; border: 1px solid #dbe2ea; padding: 0.6rem 1rem; border-radius: 30px; font-size: 0.9rem; outline: none; transition: 0.2s; }
+    input:focus, textarea:focus, select:focus { border-color: #2b7a4b; box-shadow: 0 0 0 3px rgba(43, 122, 75, 0.1); }
+    button.primary { background: #1f6e3f; border: none; color: white; padding: 0.6rem 1.4rem; border-radius: 40px; font-weight: 500; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+    button.primary:hover { background: #155a32; transform: scale(0.97); }
+    button.outline { background: transparent; border: 1px solid #cbd8e6; padding: 0.5rem 1.2rem; border-radius: 40px; cursor: pointer; }
+    .list-item { background: #f9fcff; border-radius: 20px; padding: 0.8rem 1.2rem; margin-bottom: 0.6rem; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; border-left: 5px solid #2b7a4b; }
+    .badge { background: #d9e6e0; padding: 0.2rem 1rem; border-radius: 40px; font-size: 0.75rem; }
+    .small-note { color: #4a5f72; font-size: 0.85rem; }
+    .photo-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+    .photo-grid img { width: 70px; height: 70px; object-fit: cover; border-radius: 16px; border: 2px solid #e0e9f2; }
+    hr { border: none; border-top: 1px solid #e4ecf5; margin: 1.2rem 0; }
+    .row-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    @media (max-width: 700px) { .row-2col { grid-template-columns: 1fr; } .app-header { flex-direction: column; align-items: stretch; gap: 1rem; } .nav-tabs { justify-content: center; } }
+  </style>
+</head>
+<body>
+<div class="app-header">
+  <h1><i class="fas fa-leaf"></i> Life & Farm</h1>
+  <div class="nav-tabs">
+    <button class="active" data-page="dashboard"><i class="fas fa-chart-pie"></i> Dashboard</button>
+    <button data-page="farm"><i class="fas fa-tractor"></i> Farm</button>
+    <button data-page="daily"><i class="fas fa-clock"></i> Daily</button>
+    <button data-page="money"><i class="fas fa-wallet"></i> Money</button>
+    <button data-page="goals"><i class="fas fa-bullseye"></i> Goals</button>
+    <button data-page="reports"><i class="fas fa-file-alt"></i> Reports</button>
+    <button data-page="profile"><i class="fas fa-user"></i> Profile</button>
+  </div>
+</div>
+
+<div id="page-dashboard" class="page active">
+  <div class="dashboard-grid" id="dashStats"></div>
+  <div class="row-2col">
+    <div class="card-panel"><h2><i class="fas fa-seedling"></i> Recent farm</h2><div id="dashFarm"></div></div>
+    <div class="card-panel"><h2><i class="fas fa-list-check"></i> Goals progress</h2><div id="dashGoals"></div></div>
+  </div>
+  <div class="card-panel"><h2><i class="fas fa-bell"></i> Reminders</h2><div id="dashReminders"></div></div>
+</div>
+
+<div id="page-farm" class="page">
+  <div class="card-panel">
+    <h2><i class="fas fa-plus-circle"></i> Add farm activity</h2>
+    <div class="flex-row">
+      <input type="text" id="farmCrop" placeholder="Crop name" value="Wheat">
+      <input type="text" id="farmField" placeholder="Field / location" value="North">
+      <input type="number" id="farmCost" placeholder="Cost $" value="120">
+      <input type="number" id="farmHarvest" placeholder="Harvest (kg)" value="340">
+      <button class="primary" id="addFarmBtn"><i class="fas fa-save"></i> Log</button>
+    </div>
+  </div>
+  <div class="card-panel"><h2><i class="fas fa-list"></i> Farm log</h2><div id="farmList"></div></div>
+</div>
+
+<div id="page-daily" class="page">
+  <div class="card-panel"><h2><i class="fas fa-pen"></i> Today's routine</h2>
+    <div class="flex-row">
+      <input type="number" id="dailySleep" placeholder="Sleep (h)" value="7.5">
+      <input type="number" id="dailyWork" placeholder="Work (h)" value="6">
+      <input type="number" id="dailyPrayer" placeholder="Prayer (min)" value="30">
+      <input type="number" id="dailyExercise" placeholder="Exercise (min)" value="45">
+      <input type="number" id="dailyStudy" placeholder="Study (min)" value="60">
+      <button class="primary" id="addDailyBtn"><i class="fas fa-check"></i> Log day</button>
+    </div>
+    <div style="margin-top: 1rem;" id="dailyList"></div>
+  </div>
+  <div class="card-panel"><h2><i class="fas fa-habit"></i> Habits</h2>
+    <div class="flex-row"><input type="text" id="habitInput" placeholder="New habit"><button class="primary" id="addHabitBtn">+</button></div>
+    <div id="habitList" style="margin-top: 1rem;"></div>
+  </div>
+</div>
+
+<div id="page-money" class="page">
+  <div class="card-panel"><h2><i class="fas fa-coins"></i> Balance & transactions</h2>
+    <div class="flex-row">
+      <input type="number" id="moneySalary" placeholder="Salary" value="2500">
+      <input type="number" id="moneyIncome" placeholder="Extra income" value="300">
+      <input type="number" id="moneyExpense" placeholder="Expense" value="150">
+      <button class="primary" id="addMoneyBtn"><i class="fas fa-calculator"></i> Update</button>
+    </div>
+    <div style="margin-top: 1rem;"><strong>Balance: </strong><span id="balanceDisplay">$0</span></div>
+    <hr>
+    <h3>History</h3>
+    <div id="moneyList"></div>
+  </div>
+</div>
+
+<div id="page-goals" class="page">
+  <div class="card-panel"><h2><i class="fas fa-flag"></i> Add goal</h2>
+    <div class="flex-row">
+      <input type="text" id="goalTitle" placeholder="Goal" value="Harvest 500kg">
+      <select id="goalPeriod"><option value="daily">Daily</option><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select>
+      <input type="number" id="goalTarget" placeholder="Target" value="500">
+      <button class="primary" id="addGoalBtn"><i class="fas fa-plus"></i> Add</button>
+    </div>
+    <div id="goalList" style="margin-top: 1.2rem;"></div>
+  </div>
+</div>
+
+<div id="page-reports" class="page">
+  <div class="card-panel"><h2><i class="fas fa-chart-bar"></i> Reports</h2>
+    <div class="flex-row">
+      <button class="primary" id="reportDailyBtn">📅 Daily</button>
+      <button class="primary" id="reportWeeklyBtn">📆 Weekly</button>
+      <button class="primary" id="reportMonthlyBtn">📊 Monthly</button>
+    </div>
+    <div id="reportContent" style="margin-top: 1.2rem; background: #f2f8fe; padding: 1rem; border-radius: 24px;"></div>
+  </div>
+</div>
+
+<div id="page-profile" class="page">
+  <div class="card-panel"><h2><i class="fas fa-user-circle"></i> Profile & notes</h2>
+    <div class="flex-row"><input type="text" id="profileName" placeholder="Your name" value="Farmer Joe"></div>
+    <div style="margin: 1rem 0;"><h3><i class="fas fa-image"></i> Photos evidence</h3>
+      <div class="photo-grid" id="photoGrid"></div>
+      <input type="file" id="photoUpload" accept="image/*" multiple>
+    </div>
+    <div><h3><i class="fas fa-sticky-note"></i> Notes</h3>
+      <textarea id="noteInput" rows="2" placeholder="Write a note..." style="width:100%; border-radius:20px; padding: 0.8rem;"></textarea>
+      <button class="primary" id="addNoteBtn" style="margin-top: 8px;">Save note</button>
+      <div id="noteList" style="margin-top: 1rem;"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  let data = { farm: [], daily: [], habits: [], money: [], goals: [], reminders: [], notes: [], photos: [], profileName: 'Farmer Joe' };
+
+  function loadData() {
+    try {
+      const raw = localStorage.getItem('farmLifeData');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        for (let key in parsed) { if (data.hasOwnProperty(key)) data[key] = parsed[key]; }
+      }
+    } catch(e) { console.warn('load err', e); }
+  }
+  function saveData() { localStorage.setItem('farmLifeData', JSON.stringify(data)); renderAll(); }
+
+  function getBalance() {
+    let bal = 0;
+    data.money.forEach(t => {
+      if (t.type === 'salary' || t.type === 'income') bal += t.amount;
+      else if (t.type === 'expense') bal -= t.amount;
+    });
+    return bal;
+  }
+
+  function renderDashboard() {
+    const farmTotal = data.farm.reduce((s, f) => s + (f.harvest || 0), 0);
+    const goalDone = data.goals.filter(g => g.done).length;
+    const totalGoals = data.goals.length || 1;
+    const balance = getBalance();
+    document.getElementById('dashStats').innerHTML = `
+      <div class="stat-card"><i class="fas fa-seedling"></i><div><h4>Harvest</h4><div class="value">${farmTotal} kg</div></div></div>
+      <div class="stat-card"><i class="fas fa-wallet"></i><div><h4>Balance</h4><div class="value">$${balance}</div></div></div>
+      <div class="stat-card"><i class="fas fa-bullseye"></i><div><h4>Goals done</h4><div class="value">${goalDone}/${totalGoals}</div></div></div>
+      <div class="stat-card"><i class="fas fa-clock"></i><div><h4>Today activity</h4><div class="value">${data.daily.length}</div></div></div>`;
+    const recent = [...data.farm].slice(-3).reverse();
+    document.getElementById('dashFarm').innerHTML = recent.length ? recent.map(f => `<div class="list-item">${f.crop} · ${f.field} · harvest ${f.harvest}kg · $${f.cost}</div>`).join('') : '<div class="small-note">No farm entries</div>';
+    const goals = data.goals.slice(0, 4);
+    document.getElementById('dashGoals').innerHTML = goals.length ? goals.map(g => `<div class="list-item">${g.title} ${g.done ? '✅' : '⏳'} (${g.period})</div>`).join('') : '<div class="small-note">No goals yet</div>';
+    const rems = data.reminders.slice(-3).reverse();
+    document.getElementById('dashReminders').innerHTML = rems.length ? rems.map(r => `<div class="list-item"><span>${r.text}</span> <span class="badge">${r.date || 'today'}</span></div>`).join('') : '<div class="small-note">No reminders</div>';
+  }
+
+  function renderFarm() {
+    const list = document.getElementById('farmList');
+    list.innerHTML = data.farm.length ? data.farm.map((f, i) => `<div class="list-item"><span><strong>${f.crop}</strong> · ${f.field} · harvest ${f.harvest}kg · cost $${f.cost}</span> <button class="outline" onclick="deleteFarm(${i})"><i class="fas fa-trash"></i></button></div>`).join('') : '<div class="small-note">No farm entries</div>';
+  }
+  window.deleteFarm = function(idx) { data.farm.splice(idx, 1); saveData(); };
+
+  function renderDaily() {
+    const list = document.getElementById('dailyList');
+    list.innerHTML = data.daily.length ? data.daily.map((d, i) => `<div class="list-item">Sleep ${d.sleep}h · Work ${d.work}h · Prayer ${d.prayer}min · Exercise ${d.exercise}min · Study ${d.study}min</div>`).join('') : '<div class="small-note">No daily entries</div>';
+    const hlist = document.getElementById('habitList');
+    hlist.innerHTML = data.habits.length ? data.habits.map((h, i) => `<div class="list-item"><span>${h}</span> <button class="outline" onclick="deleteHabit(${i})"><i class="fas fa-times"></i></button></div>`).join('') : '<div class="small-note">No habits</div>';
+  }
+  window.deleteHabit = function(idx) { data.habits.splice(idx,1); saveData(); };
+
+  function renderMoney() {
+    document.getElementById('balanceDisplay').innerText = '$' + getBalance();
+    const list = document.getElementById('moneyList');
+    list.innerHTML = data.money.length ? data.money.map((m, i) => `<div class="list-item"><span>${m.type}: $${m.amount}</span> <button class="outline" onclick="deleteMoney(${i})"><i class="fas fa-trash"></i></button></div>`).join('') : '<div class="small-note">No transactions</div>';
+  }
+  window.deleteMoney = function(idx) { data.money.splice(idx,1); saveData(); };
+
+  function renderGoals() {
+    const list = document.getElementById('goalList');
+    list.innerHTML = data.goals.map((g, i) => `<div class="list-item"><span>${g.title} (${g.period}) target: ${g.target} ${g.done ? '✅' : ''}</span> <div><button class="outline" onclick="toggleGoal(${i})">${g.done ? 'Undo' : 'Done'}</button> <button class="outline" onclick="deleteGoal(${i})"><i class="fas fa-trash"></i></button></div></div>`).join('');
+  }
+  window.toggleGoal = function(idx) { data.goals[idx].done = !data.goals[idx].done; saveData(); };
+  window.deleteGoal = function(idx) { data.goals.splice(idx,1); saveData(); };
+
+  function renderProfile() {
+    document.getElementById('profileName').value = data.profileName || '';
+    const grid = document.getElementById('photoGrid');
+    grid.innerHTML = data.photos.map((p, i) => `<div><img src="${p}" alt="photo"><br><button class="outline" onclick="deletePhoto(${i})">✕</button></div>`).join('');
+    const nlist = document.getElementById('noteList');
+    nlist.innerHTML = data.notes.map((n, i) => `<div class="list-item">${n} <button class="outline" onclick="deleteNote(${i})"><i class="fas fa-trash"></i></button></div>`).join('');
+  }
+  window.deletePhoto = function(idx) { data.photos.splice(idx,1); saveData(); };
+  window.deleteNote = function(idx) { data.notes.splice(idx,1); saveData(); };
+
+  function renderAll() { renderDashboard(); renderFarm(); renderDaily(); renderMoney(); renderGoals(); renderProfile(); }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    loadData(); renderAll();
+
+    document.querySelectorAll('.nav-tabs button').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.nav-tabs button').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        const page = this.dataset.page;
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById('page-' + page).classList.add('active');
+      });
+    });
+
+    document.getElementById('addFarmBtn').addEventListener('click', function() {
+      const crop = document.getElementById('farmCrop').value.trim() || 'unknown';
+      const field = document.getElementById('farmField').value.trim() || 'field';
+      const cost = parseFloat(document.getElementById('farmCost').value) || 0;
+      const harvest = parseFloat(document.getElementById('farmHarvest').value) || 0;
+      data.farm.push({ crop, field, cost, harvest, date: new Date().toISOString() });
+      saveData();
+    });
+
+    document.getElementById('addDailyBtn').addEventListener('click', function() {
+      const sleep = parseFloat(document.getElementById('dailySleep').value) || 0;
+      const work = parseFloat(document.getElementById('dailyWork').value) || 0;
+      const prayer = parseFloat(document.getElementById('dailyPrayer').value) || 0;
+      const exercise = parseFloat(document.getElementById('dailyExercise').value) || 0;
+      const study = parseFloat(document.getElementById('dailyStudy').value) || 0;
+      data.daily.push({ sleep, work, prayer, exercise, study, date: new Date().toISOString() });
+      saveData();
+    });
+    document.getElementById('addHabitBtn').addEventListener('click', function() {
+      const val = document.getElementById('habitInput').value.trim();
+      if (val) { data.habits.push(val); document.getElementById('habitInput').value=''; saveData(); }
+    });
+
+    document.getElementById('addMoneyBtn').addEventListener('click', function() {
+      const salary = parseFloat(document.getElementById('moneySalary').value) || 0;
+      const income = parseFloat(document.getElementById('moneyIncome').value) || 0;
+      const expense = parseFloat(document.getElementById('moneyExpense').value) || 0;
+      if (salary) data.money.push({ type: 'salary', amount: salary });
+      if (income) data.money.push({ type: 'income', amount: income });
+      if (expense) data.money.push({ type: 'expense', amount: expense });
+      saveData();
+    });
+
+    document.getElementById('addGoalBtn').addEventListener('click', function() {
+      const title = document.getElementById('goalTitle').value.trim() || 'goal';
+      const period = document.getElementById('goalPeriod').value;
+      const target = parseFloat(document.getElementById('goalTarget').value) || 0;
+      data.goals.push({ title, period, target, done: false });
+      saveData();
+    });
+
+    document.getElementById('reportDailyBtn').addEventListener('click', function() {
+      document.getElementById('reportContent').innerHTML = `<strong>Daily report</strong><br>Farm entries: ${data.farm.length} · Balance: $${getBalance()} · Goals done: ${data.goals.filter(g=>g.done).length}`;
+    });
+    document.getElementById('reportWeeklyBtn').addEventListener('click', function() {
+      document.getElementById('reportContent').innerHTML = `<strong>Weekly report</strong><br>Total harvest: ${data.farm.reduce((s,f)=>s+(f.harvest||0),0)} kg · Total expenses: $${data.money.filter(m=>m.type==='expense').reduce((s,m)=>s+m.amount,0)}`;
+    });
+    document.getElementById('reportMonthlyBtn').addEventListener('click', function() {
+      document.getElementById('reportContent').innerHTML = `<strong>Monthly report</strong><br>💰 Balance: $${getBalance()} · 🌾 Harvest: ${data.farm.reduce((s,f)=>s+(f.harvest||0),0)} kg · 🎯 Goals completed: ${data.goals.filter(g=>g.done).length}`;
+    });
+
+    document.getElementById('photoUpload').addEventListener('change', function(e) {
+      const files = e.target.files;
+      for (let f of files) {
+        const reader = new FileReader();
+        reader.onload = function(ev) { data.photos.push(ev.target.result); saveData(); };
+        reader.readAsDataURL(f);
+      }
+      this.value = '';
+    });
+    document.getElementById('addNoteBtn').addEventListener('click', function() {
+      const note = document.getElementById('noteInput').value.trim();
+      if (note) { data.notes.push(note); document.getElementById('noteInput').value=''; saveData(); }
+    });
+    document.getElementById('profileName').addEventListener('change', function() {
+      data.profileName = this.value.trim() || 'Farmer';
+      saveData();
+    });
+
+    if (data.reminders.length === 0) {
+      data.reminders.push({ text: 'Water crops', date: 'today' });
+      data.reminders.push({ text: 'Check savings', date: 'tomorrow' });
+      saveData();
+    }
+  });
+})();
+</script>
+</body>
+</html>
